@@ -1,0 +1,18 @@
+{
+    "name": "AurumGames.Animation.Editor",
+    "rootNamespace": "",
+    "references": [
+        "GUID:6c17a11b0b1c09a4397d41e7d99441cd"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

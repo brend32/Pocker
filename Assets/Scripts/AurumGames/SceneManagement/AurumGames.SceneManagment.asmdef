@@ -1,0 +1,17 @@
+{
+    "name": "AurumGames.SceneManagment",
+    "rootNamespace": "",
+    "references": [
+        "GUID:6c17a11b0b1c09a4397d41e7d99441cd",
+        "GUID:2d9505e9c74ec6b43828869451a125e8"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
