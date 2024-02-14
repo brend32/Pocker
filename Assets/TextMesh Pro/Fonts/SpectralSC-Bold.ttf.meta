@@ -1,0 +1,23 @@
+fileFormatVersion: 2
+guid: a2e7f59730067d44aa8617a83ecb96cd
+TrueTypeFontImporter:
+  externalObjects: {}
+  serializedVersion: 4
+  fontSize: 16
+  forceTextureCase: -2
+  characterSpacing: 0
+  characterPadding: 1
+  includeFontData: 1
+  fontNames:
+  - Spectral SC
+  fallbackFontReferences:
+  - {fileID: 12800000, guid: 71642e64ff7a7b04aaba3cf6a0b38e7f, type: 3}
+  - {fileID: 12800000, guid: a0895b635a042bd4597fcde69bff2390, type: 3}
+  customCharacters: 
+  fontRenderingMode: 0
+  ascentCalculationMode: 1
+  useLegacyBoundsCalculation: 0
+  shouldRoundAdvanceValue: 1
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
