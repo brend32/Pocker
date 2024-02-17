@@ -21,7 +21,7 @@ namespace Poker.UI.Menu
             {
                 Transform child = transform.GetChild(i);
 
-                child.eulerAngles = new Vector3(0, 0, i * _rotationStep * -1 + alignment);
+                child.localEulerAngles = new Vector3(0, 0, i * _rotationStep * -1 + alignment);
                 if (i != 0)
                     up = rotation * up;
 
