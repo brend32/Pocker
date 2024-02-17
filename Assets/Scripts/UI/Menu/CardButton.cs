@@ -37,8 +37,8 @@ namespace Poker.Menu.UI
 
         private void SetupAnimations()
         {
-            var anchoredPositionTrack = new FluentAnchoredPositionTrack(_transform, new Transition(300, Easing.QuadOut));
-            var scaleTrack = new FluentScaleTrack(_transform, new Transition(300, Easing.QuadOut));
+            var anchoredPositionTrack = new FluentAnchoredPositionTrack(_transform, new Transition(240, Easing.QuadOut));
+            var scaleTrack = new FluentScaleTrack(_transform, new Transition(240, Easing.QuadOut));
 
             _animation = new StatedFluentAnimationPlayer<State>(this, anchoredPositionTrack, scaleTrack);
             _animation.StateChanged += (previous, current, options) =>
@@ -55,7 +55,7 @@ namespace Poker.Menu.UI
                         anchoredPositionTrack.Set(new Vector2(0, _offset), options);
                         if (current == State.Pressed)
                         {
-                            scaleTrack.Set(Vector3.one * 0.85f, options);
+                            scaleTrack.Set(Vector3.one * 0.93f, options);
                         }
                         else
                         {
