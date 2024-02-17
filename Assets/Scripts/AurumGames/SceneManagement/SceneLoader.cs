@@ -50,8 +50,11 @@ namespace AurumGames.SceneManagement
 
         public static void Loaded<T>(T script, Scene scene) where T : SceneInitScript
         {
-            Waiting[scene.name].Invoke(script);
-            Waiting.Remove(scene.name);
+            if (Waiting.TryGetValue(scene.name, out var action))
+            {
+                action(script);
+                Waiting.Remove(scene.name);
+            }
         }
 
         private static IEnumerator LoadCoroutine(string sceneName, Action<AsyncOperation> callback)

@@ -4,8 +4,8 @@ using UnityEngine;
 
 namespace Poker.Screens
 {
-    [SceneInitScript("Menu")]
-    public class MenuScreen : PageScript
+    [SceneInitScript("ChooseDifficulty")]
+    public class ChooseDifficultyScreen : PageScript
     {
         protected override void BeforeInit()
         {
@@ -13,9 +13,9 @@ namespace Poker.Screens
             CustomInitializer.StartInitialization(gameObject.scene);
         }
 
-        public void OpenDifficultyChooseScreen()
+        public void Close()
         {
-            PageSystem.Load<ChooseDifficultyScreen>();
+            HidePage();
         }
     }
 }
