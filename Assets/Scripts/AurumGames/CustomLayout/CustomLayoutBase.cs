@@ -92,7 +92,6 @@ namespace AurumGames.CustomLayout
             }
 
             _dirty = false;
-            Debug.Log($"Updated {name}");
             UpdateLayoutInternal();
             OnLayoutUpdate?.Invoke();
         }
