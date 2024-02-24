@@ -33,6 +33,7 @@ namespace Poker.Gameplay.Core
         
         public GameStatistics Statistics { get; private set; }
         public GameState State { get; private set; } 
+        public GameController Controller { get; private set; } 
         public GameSettings Settings { get; private set; }
 
         private readonly PageSystem _pageSystem;
@@ -96,12 +97,14 @@ namespace Poker.Gameplay.Core
                     _gameScreen = gamePage;
                     gamePage.StartGame(State);
                     GameStarted?.Invoke();
+                    Controller.StartGame().Forget();
                 });
             }
             else
             {
                 _gameScreen.RestartGame(State);
                 GameStarted?.Invoke();
+                Controller.StartGame().Forget();
             }
         }
 
@@ -113,19 +116,18 @@ namespace Poker.Gameplay.Core
             Settings = gameSettings;
 
             CreateNewStates(gameSettings);
-            
-            State.StartNewRound();
         }
 
         private void CreateNewStates(GameSettings gameSettings)
         {
             Statistics = new GameStatistics();
             State = new GameState(Statistics);
+            Controller = new GameController(State);
             
-            State.AddMe(PlayerState.CreatePlayer(gameSettings, "Me"));
+            State.AddMe(PlayerState.CreatePlayer(Context.Global, gameSettings, "Me"));
             for (int i = 0; i < gameSettings.PlayersCount - 1; i++)
             {
-                State.AddPlayer(PlayerState.CreatePlayer(gameSettings, $"Player {i + 1}"));
+                State.AddPlayer(PlayerState.CreatePlayer(Context.Global, gameSettings, $"Player {i + 1}"));
             }
         }
 

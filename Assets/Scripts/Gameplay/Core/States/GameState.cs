@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using AurumGames.CompositeRoot;
 using Poker.Gameplay.Core.Models;
 using Poker.Gameplay.Core.Statistics;
 using Poker.Utils;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
 namespace Poker.Gameplay.Core.States
 {
@@ -13,19 +15,15 @@ namespace Poker.Gameplay.Core.States
 		public event Action RoundEnded;
 		public event Action VoteCicleEnded;
 		
-		public PlayerState Voter => VoterIndex > 0 ? _playersInGame[VoterIndex] : null;
 		public float PlayTime { get; set; }
 		public int Round { get; set; }
 		
 		public PlayerState Me { get; private set; }
 		public IReadOnlyList<PlayerState> Players => _players;
-		public IReadOnlyList<PlayerState> PlayersInGame => _playersInGame;
-		public int VoteStartIndex { get; private set; }
-		public int VoterIndex { get; private set; }
+		public TableState Table { get; private set; } = new();
 		public Phase Phase { get; private set; }
 		
 		private readonly List<PlayerState> _players = new();
-		private readonly List<PlayerState> _playersInGame = new();
 		private readonly GameStatistics _statistics;
 
 		public GameState(GameStatistics statistics)
@@ -44,27 +42,16 @@ namespace Poker.Gameplay.Core.States
 			_players.Add(player);
 		}
 
+		public void StartGame()
+		{
+			Table.AddPlayers(_players);
+			StartNewRound();
+		}
+
 		public void StartNewRound()
 		{
 			Round++;
-			_playersInGame.Clear();
-			foreach (PlayerState player in _players.Where(player => player.IsOutOfPlay == false))
-			{
-				_playersInGame.Add(player);
-			}
-
-			CardModel[] cards = new CardModel[4]
-			{
-				new CardModel(CardType.Circle, 9),
-				new CardModel(CardType.Flame, 9),
-				new CardModel(CardType.Square, 9),
-				new CardModel(CardType.Square, 9),
-			};
-
-			foreach (PlayerState player in _playersInGame)
-			{
-				player.GiveCards(cards.RandomEntry(), cards.RandomEntry());
-			}
+			Table.StartRound();
 		}
 
 		public void MakeBet(int amount)

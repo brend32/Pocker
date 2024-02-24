@@ -42,7 +42,6 @@ namespace Poker.Gameplay.Views
 
 		public void Bind(CardModel model)
 		{
-			Debug.Log(model.ToString());	
 			_card = _cardsDatabase.GetTexture(model);
 			
 			UpdateCardTexture();

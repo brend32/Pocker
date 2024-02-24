@@ -16,6 +16,7 @@ namespace Poker.Gameplay.Views
 		[Dependency] private GameManager _gameManager;
 
 		private bool IsMe => _gameManager.State.Me == _player;
+		private TableState TableState => _gameManager.State.Table;
 		
 		private PlayerState _player;
 		
@@ -26,7 +27,12 @@ namespace Poker.Gameplay.Views
 
 		protected override void Initialized()
 		{
-			
+			TableState.NewVoterAssigned += NewVoterAssigned;
+		}
+
+		private void NewVoterAssigned()
+		{
+			DataChanged();
 		}
 
 		public void BindTo(PlayerState player)
@@ -52,6 +58,15 @@ namespace Poker.Gameplay.Views
 			_balance.text = $"${_player.Balance}";
 			_card1.Bind(_player.Cards[0]);
 			_card2.Bind(_player.Cards[1]);
+
+			if (TableState.IsVoting && TableState.Voter == _player)
+			{
+				_name.color = Color.green;
+			}
+			else
+			{
+				_name.color = Color.white;
+			}
 		}
 	}
 }
