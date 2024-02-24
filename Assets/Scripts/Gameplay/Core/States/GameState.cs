@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Poker.Gameplay.Core.Models;
 using Poker.Gameplay.Core.Statistics;
+using Poker.Utils;
 using UnityEngine;
 
 namespace Poker.Gameplay.Core.States
@@ -49,6 +51,19 @@ namespace Poker.Gameplay.Core.States
 			foreach (PlayerState player in _players.Where(player => player.IsOutOfPlay == false))
 			{
 				_playersInGame.Add(player);
+			}
+
+			CardModel[] cards = new CardModel[4]
+			{
+				new CardModel(CardType.Circle, 9),
+				new CardModel(CardType.Flame, 9),
+				new CardModel(CardType.Square, 9),
+				new CardModel(CardType.Square, 9),
+			};
+
+			foreach (PlayerState player in _playersInGame)
+			{
+				player.GiveCards(cards.RandomEntry(), cards.RandomEntry());
 			}
 		}
 

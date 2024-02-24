@@ -1,6 +1,7 @@
 using System;
 using AurumGames.CompositeRoot;
 using AurumGames.SceneManagement;
+using Poker.Gameplay.Configuration;
 using Poker.Gameplay.Core;
 using UnityEngine;
 
@@ -8,6 +9,8 @@ namespace Poker.Screens
 {
     public class BootstrapScreen : MonoBehaviour
     {
+        [SerializeField] private CardsDatabase _cardsDatabase;
+        
         private PageSystem _pageSystem;
         
         private void Awake()
@@ -25,6 +28,8 @@ namespace Poker.Screens
 
             _pageSystem = PageSystem.FastCreateAndRegister(context);
             WindowSystem.FastCreateAndRegister(context);
+            
+            context.Register(_cardsDatabase);
 
             GameManager.FastCreateAndRegister(context);
         }

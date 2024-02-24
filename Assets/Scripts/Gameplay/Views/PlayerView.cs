@@ -10,6 +10,8 @@ namespace Poker.Gameplay.Views
 	{
 		[SerializeField] private TextMeshPro _balance;
 		[SerializeField] private TextMeshPro _name;
+		[SerializeField] private CardView _card1;
+		[SerializeField] private CardView _card2;
 		
 		[Dependency] private GameManager _gameManager;
 
@@ -33,6 +35,9 @@ namespace Poker.Gameplay.Views
 			_player.DataChanged += DataChanged;
 			gameObject.SetActive(true);
 			
+			_card1.Revealed = IsMe;
+			_card2.Revealed = IsMe;
+			
 			DataChanged();
 		}
 
@@ -45,6 +50,8 @@ namespace Poker.Gameplay.Views
 		{
 			_name.text = _player.Name;
 			_balance.text = $"${_player.Balance}";
+			_card1.Bind(_player.Cards[0]);
+			_card2.Bind(_player.Cards[1]);
 		}
 	}
 }

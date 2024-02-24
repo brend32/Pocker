@@ -153,6 +153,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 86f4ac87c2df82c49869f53a5ee009d5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _cardsDatabase: {fileID: 11400000, guid: a018193c01c0adf4b9ade44cbc9ffd56, type: 2}
 --- !u!114 &1997923515
 MonoBehaviour:
   m_ObjectHideFlags: 0
