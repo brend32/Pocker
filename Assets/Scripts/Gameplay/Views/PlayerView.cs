@@ -12,6 +12,7 @@ namespace Poker.Gameplay.Views
 		[SerializeField] private TextMeshPro _name;
 		[SerializeField] private CardView _card1;
 		[SerializeField] private CardView _card2;
+		[SerializeField] private TextMeshPro _bet;
 		
 		[Dependency] private GameManager _gameManager;
 
@@ -54,14 +55,27 @@ namespace Poker.Gameplay.Views
 
 		private void DataChanged()
 		{
-			_name.text = _player.Name;
+			if (_player.IsOutOfPlay)
+			{
+				_name.text = "Out";
+			}
+			else
+			{
+				_name.text = _player.Name;
+			}
 			_balance.text = $"${_player.Balance}";
 			_card1.Bind(_player.Cards[0]);
 			_card2.Bind(_player.Cards[1]);
 
+			_bet.text = $"Bet:\n{_player.Bet}$";
+
 			if (TableState.IsVoting && TableState.Voter == _player)
 			{
 				_name.color = Color.green;
+			}
+			else if (_player.Folded || _player.IsOutOfPlay)
+			{
+				_name.color = Color.red;
 			}
 			else
 			{

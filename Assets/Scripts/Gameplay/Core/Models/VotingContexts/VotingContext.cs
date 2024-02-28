@@ -3,23 +3,46 @@ using Poker.Gameplay.Core.States;
 
 namespace Poker.Gameplay.Core.Models.VotingContexts
 {
-	public abstract class VotingContext
+	public enum VotingAction
 	{
-		public PlayerState Voter { get; }
-		public bool HasAction { get; private set; }
-		
-		
-		protected VotingContext(PlayerState voter)
+		Fold,
+		Raise,
+		Call
+	}
+	
+	public struct VotingResponse
+	{
+		public readonly int RaiseAmount;
+		public readonly VotingAction Action;
+
+		private VotingResponse(VotingAction action, int raiseAmount = 0)
 		{
-			Voter = voter;
+			Action = action;
+			RaiseAmount = raiseAmount;
 		}
 
-		protected void MadeAction()
+		public static VotingResponse Fold()
 		{
-			if (HasAction)
-				throw new Exception("Multiple action not allowed");
-			
-			HasAction = true;
+			return new VotingResponse(VotingAction.Fold);
 		}
+		
+		public static VotingResponse Call()
+		{
+			return new VotingResponse(VotingAction.Call);
+		}
+		
+		public static VotingResponse Raise(int amount)
+		{
+			if (amount <= 0)
+				throw new Exception($"Raise can't be equal or less than 0: [Amount: {amount}]");
+			
+			return new VotingResponse(VotingAction.Raise, amount);
+		}
+	}
+	
+	public class VotingContext
+	{
+		public int MinimumBet { get; set; }
+		public bool IsBetRequired => MinimumBet != 0;
 	}
 }

@@ -412,6 +412,7 @@ MonoBehaviour:
   _name: {fileID: 4862311522236770064}
   _card1: {fileID: 4170928982793325435}
   _card2: {fileID: 859778893408747543}
+  _bet: {fileID: 7575422776262323571}
 --- !u!1 &4862311522236770094
 GameObject:
   m_ObjectHideFlags: 0

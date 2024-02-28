@@ -2,6 +2,7 @@
 using AurumGames.CompositeRoot;
 using Poker.Gameplay.Configuration;
 using Poker.Gameplay.Core.Models;
+using TMPro;
 using UnityEngine;
 
 namespace Poker.Gameplay.Views
@@ -24,6 +25,8 @@ namespace Poker.Gameplay.Views
 		[SerializeField] private Texture2D _card;
 		[SerializeField] private bool _reveal;
 
+		public TextMeshPro DebugText;
+
 		[Dependency] private CardsDatabase _cardsDatabase;
 
 		private Material _face;
@@ -42,6 +45,7 @@ namespace Poker.Gameplay.Views
 
 		public void Bind(CardModel model)
 		{
+			DebugText.text = $"{model.Type}\n<size=150%>{model.Value}";
 			_card = _cardsDatabase.GetTexture(model);
 			
 			UpdateCardTexture();

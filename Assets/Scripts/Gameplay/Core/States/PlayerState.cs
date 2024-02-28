@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Threading;
 using AurumGames.CompositeRoot;
 using Cysharp.Threading.Tasks;
 using Poker.Gameplay.Core.Contracts;
@@ -25,7 +26,7 @@ namespace Poker.Gameplay.Core.States
 		public IReadOnlyList<CardModel> Cards => _cards; 
 		
 		public int Bet { get; private set; }
-		public bool IsAllInBet { get; private set; }
+		public bool IsAllIn => Balance == 0;
 		public bool Folded { get; private set; }
 		public bool IsOutOfPlay { get; private set; }
 
@@ -40,15 +41,36 @@ namespace Poker.Gameplay.Core.States
 			_dataChanged.Invoke();
 		}
 
-		public void MakeBet(int amount)
+		public void ResetBetState()
 		{
-			if (Balance < amount)
-				throw new InvalidOperationException("No money for bet");
+			Bet = 0;
+		}
 
-			Bet = amount;
+		public void ResetRoundState()
+		{
+			Bet = 0;
+			Folded = false;
+
+			IsOutOfPlay = Balance == 0;
+		}
+
+		public int MakeBet(int bet)
+		{
+			if (Bet > bet)
+				throw new Exception($"Invalid bet amount, Current: {Bet}, New bet: {bet}");
+
+			var amount = bet - Bet; 
+			
+			if (Balance < amount)
+			{
+				amount = Balance;
+			}
+
+			Bet += amount;
 			Balance -= amount;
 			
 			_dataChanged.Invoke();
+			return amount;
 		}
 
 		public void Fold()
@@ -58,29 +80,44 @@ namespace Poker.Gameplay.Core.States
 
 		public static PlayerState CreatePlayer(Context scope, GameSettings gameSettings, string name)
 		{
-			return new PlayerState()
+			var logic = new TestLogic()
 			{
-				Logic = new TestLogic(),
+
+			};
+			var player = new PlayerState()
+			{
+				Logic = logic,
 				Balance = gameSettings.StartingCash,
 				Name = name
 			};
+			logic.O = player;
+			return player;
 		}
 	}
 
 	public partial class TestLogic : IPlayerLogic
 	{
-		public async UniTask MakeVotingAction(VotingContext context)
+		public PlayerState O;
+		
+		public async UniTask<VotingResponse> MakeVotingAction(VotingContext context, CancellationToken cancellationToken)
 		{
+			if (O.Name.Contains("2"))
+			{
+				for (int i = 0; i < 2; i++)
+				{
+					Debug.Log($"Thinking long {O.Name} " + i);
+					await UniTask.Delay(400, cancellationToken: cancellationToken);
+				}
+				return VotingResponse.Raise(10);
+			}
+			
 			for (int i = 0; i < 3; i++)
 			{
-				Debug.Log($"Thinking {context.Voter.Name} " + i);
-				await UniTask.Delay(700);
+				Debug.Log($"Thinking {O.Name} " + i);
+				await UniTask.Delay(700, cancellationToken: cancellationToken);
 			}
 
-			if (context is NoBetsPlacedContext noBets)
-			{
-				noBets.Check();
-			}
+			return VotingResponse.Call();
 		}
 	}
 }

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 using Cysharp.Threading.Tasks;
 using Poker.Gameplay.Core.Models.VotingContexts;
 
@@ -13,6 +14,6 @@ namespace Poker.Gameplay.Core.Contracts
 	
 	public interface IPlayerLogic
 	{
-		UniTask MakeVotingAction(VotingContext context);
+		UniTask<VotingResponse> MakeVotingAction(VotingContext context, CancellationToken cancellationToken);
 	}
 }

@@ -33,6 +33,7 @@ namespace Poker.Gameplay.Core
 		{
 			Debug.Log("Started round " + _state.Round);
 			_state.StartNewRound();
+			_roundStarted.Invoke();
 			//TODO: Wait for animation
 			while (_table.IsAllCardsRevealed() == false)
 			{
@@ -52,6 +53,7 @@ namespace Poker.Gameplay.Core
 
 		public void EndRound()
 		{
+			_table.EndRound();
 			Debug.Log("Round ended");
 		}
 	}

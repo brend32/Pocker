@@ -21,6 +21,7 @@ namespace Poker.Gameplay.Core
 		public async UniTaskVoid StartGame()
 		{
 			_state.StartGame();
+			await UniTask.Delay(1000);
 			while (IsPlaying())
 			{
 				await Round.StartRound();
