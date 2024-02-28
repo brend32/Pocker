@@ -18,7 +18,7 @@ namespace Poker.Gameplay.Core.States
 				new(CardType.Circle, value),
 				new(CardType.Flame, value),
 				new(CardType.Square, value),
-				new(CardType.Square, value),
+				new(CardType.Triangle, value),
 			}).ToArray();
 		
 		public event Action PotChanged
@@ -50,7 +50,16 @@ namespace Poker.Gameplay.Core.States
 		}
 		public int VoteEndIndex { get; private set; }
 		public VotingContext VotingContext { get; private set; } = new();
-		public int Pot { get; private set; }
+
+		public int Pot
+		{
+			get => _pot;
+			private set
+			{
+				_pot = value;
+				_potChanged.Invoke();
+			}
+		}
 		public int VoterIndex { get; private set; }
 		
 		private readonly List<PlayerState> _playersInGame = new();
@@ -60,6 +69,7 @@ namespace Poker.Gameplay.Core.States
 		private IndependentEvent _newCardRevealed;
 		private IndependentEvent _newVoterAssigned;
 		private IndependentEvent _potChanged;
+		private int _pot;
 		private int _firstVoterIndex = -1;
 
 		public void AddPlayers(IEnumerable<PlayerState> players)
@@ -82,6 +92,10 @@ namespace Poker.Gameplay.Core.States
 		public void EndRound()
 		{
 			//TODO: Decide winner
+
+			var activePlayers = _playersInGame.Where(player => player.Folded == false).ToArray();
+			PlayerState winner = activePlayers.RandomEntry();
+			winner.GiveMoney(Pot);
 
 			Pot = 0;
 
@@ -128,7 +142,6 @@ namespace Poker.Gameplay.Core.States
 			//TODO: Split pot
 			var bet = Voter.MakeBet(VotingContext.MinimumBet);
 			Pot += bet;
-			_potChanged.Invoke();
 		}
 
 		public void Raise(int amount)
@@ -142,7 +155,6 @@ namespace Poker.Gameplay.Core.States
 			VotingContext.MinimumBet += amount;
 			var bet = Voter.MakeBet(VotingContext.MinimumBet);
 			Pot += bet;
-			_potChanged.Invoke();
 		}
 
 		public void ResetVotingCycle()

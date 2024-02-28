@@ -14,6 +14,11 @@ namespace Poker.Gameplay.Core
 			add => _roundStarted.Add(value);
 			remove => _roundStarted.Remove(value);
 		}
+		public event Action RoundEnded
+		{
+			add => _roundEnded.Add(value);
+			remove => _roundEnded.Remove(value);
+		}
 		
 		public VotingCycleController Voting { get; }
 		
@@ -21,6 +26,7 @@ namespace Poker.Gameplay.Core
 		private readonly TableState _table;
 
 		private IndependentEvent _roundStarted;
+		private IndependentEvent _roundEnded;
 
 		public RoundController(GameState state)
 		{
@@ -54,6 +60,7 @@ namespace Poker.Gameplay.Core
 		public void EndRound()
 		{
 			_table.EndRound();
+			_roundEnded.Invoke();
 			Debug.Log("Round ended");
 		}
 	}

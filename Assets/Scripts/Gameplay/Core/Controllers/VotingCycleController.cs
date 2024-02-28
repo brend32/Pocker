@@ -27,7 +27,7 @@ namespace Poker.Gameplay.Core.Controllers
 				var votingContext = new VotingContext();
 				var thinkingTask = _table.Voter.Logic.MakeVotingAction(votingContext, tokenSource.Token).Preserve();
 				var result = await UniTask.WhenAny(
-					UniTask.Delay(4000, cancellationToken: tokenSource.Token),
+					UniTask.Delay(40000, cancellationToken: tokenSource.Token),
 					thinkingTask);
 
 				if (result == 1)

@@ -124,10 +124,10 @@ namespace Poker.Gameplay.Core
             State = new GameState(Statistics);
             Controller = new GameController(State);
             
-            State.AddMe(PlayerState.CreatePlayer(Context.Global, gameSettings, "Me"));
+            State.AddMe(PlayerState.CreatePlayer(gameSettings, "Me"));
             for (int i = 0; i < gameSettings.PlayersCount - 1; i++)
             {
-                State.AddPlayer(PlayerState.CreatePlayer(Context.Global, gameSettings, $"Player {i + 1}"));
+                State.AddPlayer(PlayerState.CreateBotPlayer(gameSettings, $"Player {i + 1}"));
             }
         }
 

@@ -54,6 +54,11 @@ namespace Poker.Gameplay.Core.States
 			IsOutOfPlay = Balance == 0;
 		}
 
+		public void GiveMoney(int amount)
+		{
+			Balance += amount;
+		} 
+
 		public int MakeBet(int bet)
 		{
 			if (Bet > bet)
@@ -78,7 +83,7 @@ namespace Poker.Gameplay.Core.States
 			Folded = true;
 		}
 
-		public static PlayerState CreatePlayer(Context scope, GameSettings gameSettings, string name)
+		public static PlayerState CreateBotPlayer(GameSettings gameSettings, string name)
 		{
 			var logic = new TestLogic()
 			{
@@ -91,6 +96,17 @@ namespace Poker.Gameplay.Core.States
 				Name = name
 			};
 			logic.O = player;
+			return player;
+		}
+		
+		public static PlayerState CreatePlayer(GameSettings gameSettings, string name)
+		{
+			var player = new PlayerState()
+			{
+				Logic = new UserLogic(),
+				Balance = gameSettings.StartingCash,
+				Name = name
+			};
 			return player;
 		}
 	}
@@ -106,7 +122,7 @@ namespace Poker.Gameplay.Core.States
 				for (int i = 0; i < 2; i++)
 				{
 					Debug.Log($"Thinking long {O.Name} " + i);
-					await UniTask.Delay(400, cancellationToken: cancellationToken);
+					await UniTask.Delay(100, cancellationToken: cancellationToken);
 				}
 				return VotingResponse.Raise(10);
 			}
@@ -114,10 +130,35 @@ namespace Poker.Gameplay.Core.States
 			for (int i = 0; i < 3; i++)
 			{
 				Debug.Log($"Thinking {O.Name} " + i);
-				await UniTask.Delay(700, cancellationToken: cancellationToken);
+				await UniTask.Delay(100, cancellationToken: cancellationToken);
 			}
 
 			return VotingResponse.Call();
+		}
+	}
+
+	public class UserLogic : IPlayerLogic
+	{
+		private VotingResponse? _response;
+
+		public void MakeChoice(VotingResponse choice)
+		{
+			_response = choice;
+		}
+
+		public async UniTask<VotingResponse> MakeVotingAction(VotingContext context, CancellationToken cancellationToken)
+		{
+			_response = null;
+			
+			while (cancellationToken.IsCancellationRequested == false)
+			{
+				if (_response != null)
+					return _response.Value;
+
+				await UniTask.Yield();
+			}
+
+			return default;
 		}
 	}
 }

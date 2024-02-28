@@ -29,6 +29,12 @@ namespace Poker.Gameplay.Views
 		protected override void Initialized()
 		{
 			TableState.NewVoterAssigned += NewVoterAssigned;
+			_gameManager.Controller.Round.RoundEnded += RoundEnded;
+		}
+
+		private void RoundEnded()
+		{
+			DataChanged();
 		}
 
 		private void NewVoterAssigned()

@@ -19,6 +19,7 @@ namespace Poker.Gameplay.Views
 		protected override void Initialized()
 		{
 			_gameManager.State.Table.PotChanged += PotChanged;
+			PotChanged();
 		}
 
 		private void PotChanged()
