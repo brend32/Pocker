@@ -44,6 +44,7 @@ namespace Poker.Gameplay.Core.States
 		public void ResetBetState()
 		{
 			Bet = 0;
+			_dataChanged.Invoke();
 		}
 
 		public void ResetRoundState()
@@ -52,11 +53,13 @@ namespace Poker.Gameplay.Core.States
 			Folded = false;
 
 			IsOutOfPlay = Balance == 0;
+			_dataChanged.Invoke();
 		}
 
 		public void GiveMoney(int amount)
 		{
 			Balance += amount;
+			_dataChanged.Invoke();
 		} 
 
 		public int MakeBet(int bet)
@@ -81,6 +84,7 @@ namespace Poker.Gameplay.Core.States
 		public void Fold()
 		{
 			Folded = true;
+			_dataChanged.Invoke();
 		}
 
 		public static PlayerState CreateBotPlayer(GameSettings gameSettings, string name)

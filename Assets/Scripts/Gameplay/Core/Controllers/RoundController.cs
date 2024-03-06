@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading.Tasks;
 using AurumGames.CompositeRoot;
 using Cysharp.Threading.Tasks;
 using Poker.Gameplay.Core.Controllers;
@@ -19,6 +20,12 @@ namespace Poker.Gameplay.Core
 			add => _roundEnded.Add(value);
 			remove => _roundEnded.Remove(value);
 		}
+
+		public event Action RevealCards
+		{
+			add => _revealCards.Add(value);
+			remove => _revealCards.Remove(value);
+		}
 		
 		public VotingCycleController Voting { get; }
 		
@@ -27,6 +34,7 @@ namespace Poker.Gameplay.Core
 
 		private IndependentEvent _roundStarted;
 		private IndependentEvent _roundEnded;
+		private IndependentEvent _revealCards;
 
 		public RoundController(GameState state)
 		{
@@ -47,6 +55,13 @@ namespace Poker.Gameplay.Core
 				await StartVotingCycle();
 				_table.RevealNextCard();
 			}
+
+			Debug.Log("Reveal cards");
+			_revealCards.Invoke();
+			await Task.Delay(5000);
+			_table.DecideWinner();
+			Debug.Log("Decide winner");
+			await Task.Delay(5000);
 			
 			EndRound();
 		}

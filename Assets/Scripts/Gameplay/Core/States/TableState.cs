@@ -50,6 +50,7 @@ namespace Poker.Gameplay.Core.States
 		}
 		public int VoteEndIndex { get; private set; }
 		public VotingContext VotingContext { get; private set; } = new();
+		public PlayerState Winner { get; private set; }
 
 		public int Pot
 		{
@@ -80,6 +81,7 @@ namespace Poker.Gameplay.Core.States
 		public void StartRound()
 		{
 			Pot = 0;
+			Winner = null;
 			
 			_deck.Clear();
 			_deck.AddRange(Deck);
@@ -93,11 +95,7 @@ namespace Poker.Gameplay.Core.States
 		{
 			//TODO: Decide winner
 
-			var activePlayers = _playersInGame.Where(player => player.Folded == false).ToArray();
-			PlayerState winner = activePlayers.RandomEntry();
-			winner.GiveMoney(Pot);
-
-			Pot = 0;
+			Winner = null;
 
 			foreach (PlayerState player in _playersInGame)
 			{
@@ -200,7 +198,15 @@ namespace Poker.Gameplay.Core.States
 
 		public void RevealNextCard()
 		{
-			CardsRevealed++;
+			if (CardsRevealed == 0)
+			{
+				CardsRevealed = 3;
+			}
+			else
+			{
+				CardsRevealed++;
+			}
+			
 			_newCardRevealed.Invoke();
 		}
 
@@ -235,6 +241,31 @@ namespace Poker.Gameplay.Core.States
 		public bool IsAllCardsRevealed()
 		{
 			return CardsRevealed == _cards.Length;
+		}
+
+		public void DecideWinner()
+		{
+			var activePlayers = _playersInGame
+				.Where(player => player.Folded == false);
+			var highestCombination = -1;
+			PlayerState playerWithHighestCombination = null;
+
+			foreach (PlayerState player in activePlayers)
+			{
+				var combinationValue = new Combination(player.Cards, Cards).Value;
+				if (combinationValue > highestCombination)
+				{
+					highestCombination = combinationValue;
+					playerWithHighestCombination = player;
+				}
+			}
+			
+			Winner = playerWithHighestCombination;
+			Debug.Log(Winner.Name);
+			
+			playerWithHighestCombination!.GiveMoney(Pot);
+			
+			Pot = 0;
 		}
 	}
 }

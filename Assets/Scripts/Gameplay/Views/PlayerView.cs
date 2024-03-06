@@ -1,5 +1,7 @@
-﻿using AurumGames.CompositeRoot;
+﻿using System.Linq;
+using AurumGames.CompositeRoot;
 using Poker.Gameplay.Core;
+using Poker.Gameplay.Core.Models;
 using Poker.Gameplay.Core.States;
 using TMPro;
 using UnityEngine;
@@ -13,6 +15,7 @@ namespace Poker.Gameplay.Views
 		[SerializeField] private CardView _card1;
 		[SerializeField] private CardView _card2;
 		[SerializeField] private TextMeshPro _bet;
+		[SerializeField] private TextMeshPro _combination;
 		
 		[Dependency] private GameManager _gameManager;
 
@@ -20,6 +23,7 @@ namespace Poker.Gameplay.Views
 		private TableState TableState => _gameManager.State.Table;
 		
 		private PlayerState _player;
+		private bool _revealCards;
 		
 		protected override void InitInnerState()
 		{
@@ -28,12 +32,28 @@ namespace Poker.Gameplay.Views
 
 		protected override void Initialized()
 		{
+			RoundController roundController = _gameManager.Controller.Round;
+			
 			TableState.NewVoterAssigned += NewVoterAssigned;
-			_gameManager.Controller.Round.RoundEnded += RoundEnded;
+			roundController.RoundEnded += RoundEnded;
+			roundController.RevealCards += RevealCards;
+			TableState.NewCardRevealed += NewCardRevealed;
+		}
+
+		private void RevealCards()
+		{
+			_revealCards = true;
+			DataChanged();
+		}
+
+		private void NewCardRevealed()
+		{
+			DataChanged();
 		}
 
 		private void RoundEnded()
 		{
+			_revealCards = false;
 			DataChanged();
 		}
 
@@ -48,9 +68,6 @@ namespace Poker.Gameplay.Views
 			_player.DataChanged += DataChanged;
 			gameObject.SetActive(true);
 			
-			_card1.Revealed = IsMe;
-			_card2.Revealed = IsMe;
-			
 			DataChanged();
 		}
 
@@ -61,6 +78,19 @@ namespace Poker.Gameplay.Views
 
 		private void DataChanged()
 		{
+			var shouldShow = IsMe || _revealCards;
+			_card1.Revealed = shouldShow;
+			_card2.Revealed = shouldShow;
+
+			if (shouldShow && TableState.CardsRevealed > 0)
+			{
+				_combination.text = new Combination(_player.Cards, TableState.Cards.Take(TableState.CardsRevealed)).Name;
+			}
+			else
+			{
+				_combination.text = string.Empty;
+			}
+			
 			if (_player.IsOutOfPlay)
 			{
 				_name.text = "Out";
@@ -75,7 +105,11 @@ namespace Poker.Gameplay.Views
 
 			_bet.text = $"Bet:\n{_player.Bet}$";
 
-			if (TableState.IsVoting && TableState.Voter == _player)
+			if (TableState.Winner == _player)
+			{
+				_name.color = Color.yellow;
+			}
+			else if (TableState.IsVoting && TableState.Voter == _player)
 			{
 				_name.color = Color.green;
 			}

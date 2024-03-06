@@ -10,7 +10,7 @@ namespace Poker.Gameplay.Core.Models
 		Flame
 	}
 	
-	public readonly struct CardModel : IEquatable<CardModel>
+	public readonly struct CardModel : IEquatable<CardModel>, IComparable<CardModel>
 	{
 		public readonly CardType Type;
 		public readonly int Value;
@@ -49,6 +49,31 @@ namespace Poker.Gameplay.Core.Models
 		public override string ToString()
 		{
 			return $"{nameof(Type)}: {Type}, {nameof(Value)}: {Value}";
+		}
+
+		public int CompareTo(CardModel other)
+		{
+			return Value.CompareTo(other.Value);
+		}
+
+		public static bool operator <(CardModel left, CardModel right)
+		{
+			return left.CompareTo(right) < 0;
+		}
+
+		public static bool operator >(CardModel left, CardModel right)
+		{
+			return left.CompareTo(right) > 0;
+		}
+
+		public static bool operator <=(CardModel left, CardModel right)
+		{
+			return left.CompareTo(right) <= 0;
+		}
+
+		public static bool operator >=(CardModel left, CardModel right)
+		{
+			return left.CompareTo(right) >= 0;
 		}
 	}
 }
