@@ -75,7 +75,7 @@ namespace AurumGames.Animation
         public void Reset()
         {
             ResetTracksState();
-            Position = PlayBackwards ? _duration : 0;
+            Position = PlayBackwards ? _duration + _startDelay : 0;
         }
         
         private void ResetTracksState()

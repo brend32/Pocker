@@ -4,9 +4,9 @@ namespace Poker.Gameplay.Core.Models
 {
 	public enum CardType
 	{
-		Triangle,
-		Square,
-		Circle,
+		Hills,
+		Oil,
+		Balloon,
 		Flame
 	}
 	

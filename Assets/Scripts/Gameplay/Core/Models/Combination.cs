@@ -23,15 +23,15 @@ namespace Poker.Gameplay.Core.Models
 
 			foreach (CardModel card in combined)
 			{
-				if (card.Value is < 2 or > 14)
+				if (card.Value is < 2 or > 13)
 					return;
 			}
 			
 			Array.Sort(combined);
 
-			var sameValueCards = Enumerable.Range(2, 15).ToDictionary(i => i, i => 0);
+			var sameValueCards = Enumerable.Range(2, 14).ToDictionary(i => i, i => 0);
 			var sameTypeCards =
-				new[] { CardType.Circle, CardType.Flame, CardType.Square, CardType.Triangle }.ToDictionary(i => i,
+				new[] { CardType.Balloon, CardType.Flame, CardType.Oil, CardType.Hills }.ToDictionary(i => i,
 					i => 0);
 			var pairs = 0;
 			var threes = 0;
@@ -57,7 +57,7 @@ namespace Poker.Gameplay.Core.Models
 
 				if (i == 0)
 				{
-					if (combined[^1].Value == 14 && card.Value == 2)
+					if (combined[^1].Value == 13 && card.Value == 2)
 					{
 						streak++;
 					}

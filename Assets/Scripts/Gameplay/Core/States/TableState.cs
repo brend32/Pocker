@@ -15,10 +15,10 @@ namespace Poker.Gameplay.Core.States
 		public IReadOnlyList<CardModel> Deck { get; } = Enumerable.Range(2, 12)
 			.SelectMany(value => new CardModel[]
 			{
-				new(CardType.Circle, value),
+				new(CardType.Balloon, value),
 				new(CardType.Flame, value),
-				new(CardType.Square, value),
-				new(CardType.Triangle, value),
+				new(CardType.Oil, value),
+				new(CardType.Hills, value),
 			}).ToArray();
 		
 		public event Action PotChanged

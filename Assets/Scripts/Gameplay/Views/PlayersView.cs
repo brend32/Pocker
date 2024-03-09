@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using AurumGames.CompositeRoot;
+using Cysharp.Threading.Tasks;
 using Poker.Gameplay.Core;
 using Poker.Gameplay.Core.States;
 using TMPro;
@@ -14,6 +15,8 @@ namespace Poker.Gameplay.Views
 		[SerializeField] private PlayerView _me;
 		
 		[Dependency] private GameManager _gameManager;
+
+		private int _otherPlayersCount;
 		
 		protected override void InitInnerState()
 		{
@@ -33,6 +36,8 @@ namespace Poker.Gameplay.Views
 
 			if (players.Length > _others.Length)
 				throw new Exception($"Not enough slots; Need: {players.Length}, Has: {_others.Length}");
+
+			_otherPlayersCount = players.Length;
 			
 			for (int i = 0; i < _others.Length; i++)
 			{
@@ -45,6 +50,20 @@ namespace Poker.Gameplay.Views
 				{
 					view.Hide();
 				}
+			}
+		}
+
+		public async UniTask RevealOthersCardsRoundEndAnimation()
+		{
+			for (var i = 0; i < _otherPlayersCount; i++)
+			{
+				PlayerView playerView = _others[i];
+				PlayerState state = playerView.PlayerState;
+				if (state.Folded || state.IsOutOfPlay)
+					continue;
+
+				await playerView.RevealCardsRoundEndAnimation();
+				await UniTask.Delay(500);
 			}
 		}
 	}

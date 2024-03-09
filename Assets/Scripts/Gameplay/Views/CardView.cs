@@ -1,5 +1,8 @@
 ﻿using System;
+using AurumGames.Animation;
+using AurumGames.Animation.Tracks;
 using AurumGames.CompositeRoot;
+using Cysharp.Threading.Tasks;
 using Poker.Gameplay.Configuration;
 using Poker.Gameplay.Core.Models;
 using TMPro;
@@ -30,10 +33,31 @@ namespace Poker.Gameplay.Views
 		[Dependency] private CardsDatabase _cardsDatabase;
 
 		private Material _face;
+
+		private AnimationPlayer _revealCardPlayer;
 		
 		protected override void InitInnerState()
 		{
 			_face = Instantiate(_faceReference);
+
+			Transform self = transform;
+
+			Vector3 position = self.localPosition;
+
+			_revealCardPlayer = new AnimationPlayer(this, new ITrack[]
+			{
+				new LocalEulerAnglesTrack(self, new []
+				{
+					new KeyFrame<Vector3>(0, new Vector3(0, 0, 180), Easing.QuadOut),
+					new KeyFrame<Vector3>(600, new Vector3(0, 0, 360), Easing.QuadOut)
+				}),
+				new LocalPositionTrack(self, new []
+				{
+					new KeyFrame<Vector3>(0, new Vector3(position.x, 0, position.z), Easing.QuintOut),
+					new KeyFrame<Vector3>(350, new Vector3(position.x, 2, position.z), Easing.QuintIn),
+					new KeyFrame<Vector3>(700, new Vector3(position.x, 0, position.z), Easing.QuintIn),
+				})
+			});
 			
 			UpdateCardTexture();
 		}
@@ -41,6 +65,14 @@ namespace Poker.Gameplay.Views
 		protected override void Initialized()
 		{
 			
+		}
+
+		public async UniTask RevealCardAnimation()
+		{
+			_revealCardPlayer.PlayFromStart();
+			Revealed = true;
+
+			await UniTask.WaitWhile(() => _revealCardPlayer.IsPlaying);
 		}
 
 		public void Bind(CardModel model)

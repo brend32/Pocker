@@ -10,12 +10,13 @@ namespace Poker.Gameplay.Core
 	{
 		private readonly GameState _state;
 		public RoundController Round { get; }
-		public VotingCycleController VotingCycle { get; }
+		public AnimationController Animation { get; }
 
 		public GameController(GameState state)
 		{
 			_state = state;
-			Round = new RoundController(state);
+			Animation = new AnimationController();
+			Round = new RoundController(state, Animation);
 		}
 
 		public async UniTaskVoid StartGame()
