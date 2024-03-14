@@ -397,6 +397,7 @@ MonoBehaviour:
   OnClick:
     m_PersistentCalls:
       m_Calls: []
+  Difficulty: 1
   _shadow: {fileID: 1199992140}
   _selected: {fileID: 1391199725}
   _hoverColor: {r: 0.8352942, g: 0.86666673, b: 0.2509804, a: 1}
@@ -713,6 +714,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 349f401e4f7d9334c8185271164b6448, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _difficulty: {fileID: 1402037114}
 --- !u!1 &705333852
 GameObject:
   m_ObjectHideFlags: 0
@@ -1650,6 +1652,7 @@ MonoBehaviour:
   OnClick:
     m_PersistentCalls:
       m_Calls: []
+  Difficulty: 3
   _shadow: {fileID: 1285003}
   _selected: {fileID: 1791474791}
   _hoverColor: {r: 0.86666673, g: 0.2509804, b: 0.2627451, a: 1}
@@ -2180,6 +2183,7 @@ MonoBehaviour:
   OnClick:
     m_PersistentCalls:
       m_Calls: []
+  Difficulty: 0
   _shadow: {fileID: 1851823447}
   _selected: {fileID: 1938638332}
   _hoverColor: {r: 0.5686275, g: 0.87843144, b: 0.4666667, a: 1}
@@ -2308,6 +2312,7 @@ MonoBehaviour:
   OnClick:
     m_PersistentCalls:
       m_Calls: []
+  Difficulty: 2
   _shadow: {fileID: 1115219404}
   _selected: {fileID: 1820052420}
   _hoverColor: {r: 0.86666673, g: 0.2509804, b: 0.2627451, a: 1}

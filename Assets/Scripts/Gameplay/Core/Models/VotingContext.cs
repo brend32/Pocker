@@ -34,7 +34,7 @@ namespace Poker.Gameplay.Core.Models
 		public static VotingResponse Raise(int amount)
 		{
 			if (amount <= 0)
-				throw new Exception($"Raise can't be equal or less than 0: [Amount: {amount}]");
+				return Call();
 			
 			return new VotingResponse(VotingAction.Raise, amount);
 		}

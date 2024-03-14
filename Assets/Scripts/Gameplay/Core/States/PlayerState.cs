@@ -19,18 +19,18 @@ namespace Poker.Gameplay.Core.States
 			remove => _dataChanged.Remove(value);
 		}
 		
-		public IPlayerLogic Logic { get; private set; }
-		public int Balance { get; private set; }
-		public string Name { get; private set; }
+		public IPlayerLogic Logic { get; protected set; }
+		public int Balance { get; protected set; }
+		public string Name { get; protected set; }
 		public IReadOnlyList<CardModel> Cards => _cards; 
 		
-		public int Bet { get; private set; }
+		public int Bet { get; protected set; }
 		public bool IsAllIn => Balance == 0;
-		public bool Folded { get; private set; }
-		public bool IsOutOfPlay { get; private set; }
+		public bool Folded { get; protected set; }
+		public bool IsOutOfPlay { get; protected set; }
 
-		private readonly CardModel[] _cards = new CardModel[2];
-		private IndependentEvent _dataChanged;
+		protected readonly CardModel[] _cards = new CardModel[2];
+		protected IndependentEvent _dataChanged;
 
 		public void GiveCards(CardModel card1, CardModel card2)
 		{
@@ -90,22 +90,6 @@ namespace Poker.Gameplay.Core.States
 			Folded = true;
 			_dataChanged.Invoke();
 		}
-
-		public static PlayerState CreateBotPlayer(GameSettings gameSettings, string name)
-		{
-			var logic = new TestLogic()
-			{
-
-			};
-			var player = new PlayerState()
-			{
-				Logic = logic,
-				Balance = gameSettings.StartingCash,
-				Name = name
-			};
-			logic.O = player;
-			return player;
-		}
 		
 		public static PlayerState CreatePlayer(GameSettings gameSettings, string name)
 		{
@@ -116,32 +100,6 @@ namespace Poker.Gameplay.Core.States
 				Name = name
 			};
 			return player;
-		}
-	}
-
-	public partial class TestLogic : IPlayerLogic
-	{
-		public PlayerState O;
-		
-		public async UniTask<VotingResponse> MakeVotingAction(VotingContext context, CancellationToken cancellationToken)
-		{
-			if (O.Name.Contains("2"))
-			{
-				for (int i = 0; i < 2; i++)
-				{
-					Debug.Log($"Thinking long {O.Name} " + i);
-					await UniTask.Delay(100, cancellationToken: cancellationToken);
-				}
-				return VotingResponse.Raise(10);
-			}
-			
-			for (int i = 0; i < 3; i++)
-			{
-				Debug.Log($"Thinking {O.Name} " + i);
-				await UniTask.Delay(100, cancellationToken: cancellationToken);
-			}
-
-			return VotingResponse.Fold();
 		}
 	}
 

@@ -8,11 +8,13 @@ namespace Poker.Gameplay.Core.Models
 	{
 		public string Name { get; private set; }
 		public int Value { get; private set; }
+		public int CombinationIndex { get; private set; }
 		
 		public Combination(IEnumerable<CardModel> playerCards, IEnumerable<CardModel> tableCards)
 		{
 			Name = string.Empty;
 			Value = -1;
+			CombinationIndex = -1;
 			
 			FormCombination(playerCards, tableCards);
 		}
@@ -90,6 +92,7 @@ namespace Poker.Gameplay.Core.Models
 				{
 					Name = "Straight flush";
 					Value = combinationValue;
+					CombinationIndex = 9;
 					return;
 				}
 			}
@@ -98,6 +101,7 @@ namespace Poker.Gameplay.Core.Models
 			{
 				Name = "Four of a kind";
 				Value = PackFour(combined, fourValue.Value);
+				CombinationIndex = 8;
 				return;
 			}
 			
@@ -107,6 +111,7 @@ namespace Poker.Gameplay.Core.Models
 				{
 					Name = "Full house";
 					Value = combinationValue;
+					CombinationIndex = 7;
 					return;
 				}
 			}
@@ -115,6 +120,7 @@ namespace Poker.Gameplay.Core.Models
 			{
 				Name = "Flush";
 				Value = PackFlush(combined, flush.Value);
+				CombinationIndex = 6;
 				return;
 			}
 			
@@ -122,6 +128,7 @@ namespace Poker.Gameplay.Core.Models
 			{
 				Name = "Straight";
 				Value = PackStraight(combined);
+				CombinationIndex = 5;
 				return;
 			}
 			
@@ -129,6 +136,7 @@ namespace Poker.Gameplay.Core.Models
 			{
 				Name = "Three of a kind";
 				Value = PackThrees(combined, sameValueCards);
+				CombinationIndex = 4;
 				return;
 			}
 			
@@ -139,16 +147,19 @@ namespace Poker.Gameplay.Core.Models
 				{
 					Name = "Pair";
 					Value = PackOnePair(combined, sameValueCards);
+					CombinationIndex = 2;
 					return;
 				}
 				
 				Name = "Two pairs";
 				Value = PackTwoPairs(combined, sameValueCards);
+				CombinationIndex = 3;
 				return;
 			}
 
 			Name = "Highest card";
 			Value = PackHighest(combined);
+			CombinationIndex = 1;
 		}
 		
 		private static bool TryStraightFlush(CardModel[] cards, CardType flush, out int combinationValue)

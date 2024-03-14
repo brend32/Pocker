@@ -127,7 +127,7 @@ namespace Poker.Gameplay.Core
             State.AddMe(PlayerState.CreatePlayer(gameSettings, "Me"));
             for (int i = 0; i < gameSettings.PlayersCount - 1; i++)
             {
-                State.AddPlayer(PlayerState.CreateBotPlayer(gameSettings, $"Player {i + 1}"));
+                State.AddPlayer(BotState.CreateBotPlayer(gameSettings, State, $"Player {i + 1}"));
             }
         }
 

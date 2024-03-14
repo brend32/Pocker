@@ -1,6 +1,7 @@
 using System;
 using AurumGames.Animation;
 using AurumGames.Animation.Tracks;
+using Poker.Gameplay.Core;
 using Poker.UI.Common;
 using UnityEngine;
 using UnityEngine.UI;
@@ -11,6 +12,7 @@ namespace Poker.UI.ChooseDifficulty
 {
     public class DifficultyCardButton : Button, IToggleOption
     {
+        public Difficulty Difficulty;
         private RectTransform _transform;
         [SerializeField] private Image _shadow;
         [SerializeField] private Image _selected;

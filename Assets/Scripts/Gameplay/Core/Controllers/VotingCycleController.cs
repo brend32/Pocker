@@ -35,35 +35,48 @@ namespace Poker.Gameplay.Core.Controllers
 				return;
 			
 			_table.StartNewVotingCycle();
+			int i = 0;
 			do
 			{
 				if (_table.Voter.CanVote())
 				{
-					using var tokenSource = new CancellationTokenSource();
-
-					var votingContext = new VotingContext();
-					var thinkingTask = _table.Voter.Logic.MakeVotingAction(votingContext, tokenSource.Token).Preserve();
-					var result = await UniTask.WhenAny(
-						UniTask.Delay(40000, cancellationToken: tokenSource.Token),
-						thinkingTask);
-
 					VotingResponse response = VotingResponse.Fold();
-					if (result == 1)
+					if (i < 2 && _table.CardsRevealed == 0)
 					{
-						response = thinkingTask.GetAwaiter().GetResult();
+						response = VotingResponse.Raise(10);
+						MakeVoteAction(response);
+
+						await _animationController.MakeChoice(_table.Voter, response);
 					}
 					else
 					{
-						tokenSource.Cancel();
-					}
-					MakeVoteAction(response);
+						using var tokenSource = new CancellationTokenSource();
 
-					await _animationController.MakeChoice(_table.Voter, response);
+						var votingContext = new VotingContext();
+						var thinkingTask = _table.Voter.Logic.MakeVotingAction(votingContext, tokenSource.Token).Preserve();
+						var result = await UniTask.WhenAny(
+							UniTask.Delay(40000, cancellationToken: tokenSource.Token),
+							thinkingTask);
+
+					
+						if (result == 1)
+						{
+							response = thinkingTask.GetAwaiter().GetResult();
+						}
+						else
+						{
+							tokenSource.Cancel();
+						}
+						MakeVoteAction(response);
+
+						await _animationController.MakeChoice(_table.Voter, response);
+					}
 				}
 
 				_table.AssignNextVoter();
 				Debug.Log("New voter: " + _table.Voter.Name);
-			} while (_table.IsVotingEnded() == false);
+				i++;
+			} while (_table.IsVotingEnded() == false && _table.CanSkipVote() == false);
 			_table.EndVotingCycle();
 			_votingEnded.Invoke();
 			

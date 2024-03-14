@@ -52,7 +52,6 @@ namespace Poker.Gameplay.Core
 			_state.StartNewRound();
 			_roundStarted.Invoke();
 			await _animationController.DealCards();
-			//TODO: Wait for animation
 			while (_table.IsAllCardsRevealed() == false)
 			{
 				await StartVotingCycle();

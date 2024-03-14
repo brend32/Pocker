@@ -183,7 +183,7 @@ namespace Poker.Gameplay.Core.States
 			for (var i = 0; i < _playersInGame.Count; i++)
 			{
 				VoterIndex = VoterIndex.NextIndex(_playersInGame.Count);
-				if (VoterIndex == current)
+				if (VoterIndex == current || VoterIndex == VoteEndIndex)
 				{
 					VoteEndIndex = VoterIndex;
 					break;
@@ -193,6 +193,7 @@ namespace Poker.Gameplay.Core.States
 					break;
 			}
 			
+			Debug.Log($"C: {current}, N: {VoterIndex}, E: {VoteEndIndex}");
 			_newVoterAssigned.Invoke();
 		}
 
@@ -254,7 +255,7 @@ namespace Poker.Gameplay.Core.States
 		public void DecideWinner()
 		{
 			var activePlayers = _playersInGame
-				.Where(player => player.Folded == false);
+				.Where(player => player.Folded == false).ToArray();
 			var highestCombination = -1;
 			PlayerState playerWithHighestCombination = null;
 
@@ -269,6 +270,18 @@ namespace Poker.Gameplay.Core.States
 			}
 			
 			Winner = playerWithHighestCombination;
+			if (Winner is BotState bot)
+			{
+				bot.Win();
+			}
+			foreach (PlayerState player in activePlayers)
+			{
+				if (player != Winner && player is BotState lostBot)
+				{
+					lostBot.Lose();
+				}
+			}
+			
 			Debug.Log(Winner.Name);
 			
 			playerWithHighestCombination!.GiveMoney(Pot);

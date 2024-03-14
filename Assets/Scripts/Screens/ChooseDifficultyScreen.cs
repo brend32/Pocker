@@ -1,6 +1,8 @@
 using AurumGames.CompositeRoot;
 using AurumGames.SceneManagement;
 using Poker.Gameplay.Core;
+using Poker.UI.ChooseDifficulty;
+using Poker.UI.Common;
 using UnityEngine;
 
 namespace Poker.Screens
@@ -8,6 +10,8 @@ namespace Poker.Screens
     [SceneInitScript("ChooseDifficulty")]
     public partial class ChooseDifficultyScreen : PageScript
     {
+        [SerializeField] private ToggleGroup _difficulty;
+        
         [Dependency] private GameManager _gameManager;
         
         protected override void BeforeInit()
@@ -26,9 +30,20 @@ namespace Poker.Screens
             _gameManager.StartGame(new GameSettings()
             {
                 PlayersCount = 3,
-                StartingCash = 200
+                StartingCash = 200,
+                Difficulty = GetDifficulty()
             });
             HidePage();
+        }
+
+        private Difficulty GetDifficulty()
+        {
+            if (_difficulty.Current is DifficultyCardButton button)
+            {
+                return button.Difficulty;
+            }
+
+            return Difficulty.Normal;
         }
     }
 }
