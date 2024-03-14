@@ -78,6 +78,7 @@ namespace AurumGames.CustomLayout
 
         private Vector2 GetSize()
         {
+            Rect self = RectTransform.rect;
             Vector2 size = _target.rect.size;
             if (_target.TryGetComponent(out CustomLayoutBase layout))
             {
@@ -102,7 +103,7 @@ namespace AurumGames.CustomLayout
                 height += _extra.y;
             }
 
-            return new Vector2(width, height);
+            return new Vector2(_fitHorizontal ? width : self.width, _fitVertical ? height : self.height);
         }
     }
 }

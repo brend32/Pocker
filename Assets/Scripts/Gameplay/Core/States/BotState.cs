@@ -117,7 +117,7 @@ namespace Poker.Gameplay.Core.States
 				combination = new Combination(_state.Cards, _tableState.Cards);
 				if (Random.value < _state.FortuneChance * _state.FortuneChance)
 				{
-					var userCombination = new Combination(_state.Cards, _tableState.Cards);
+					var userCombination = new Combination(_user.Cards, _tableState.Cards);
 					if (userCombination < combination)
 					{
 						sum += (_tableState.CardsRevealed + 1) * 3;

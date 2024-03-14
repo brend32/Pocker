@@ -11,6 +11,8 @@ namespace Poker.Screens
     public partial class ChooseDifficultyScreen : PageScript
     {
         [SerializeField] private ToggleGroup _difficulty;
+        [SerializeField] private ToggleGroup _playersCount;
+        [SerializeField] private StartingCash _startingCash;
         
         [Dependency] private GameManager _gameManager;
         
@@ -29,8 +31,8 @@ namespace Poker.Screens
         {
             _gameManager.StartGame(new GameSettings()
             {
-                PlayersCount = 3,
-                StartingCash = 200,
+                PlayersCount = ((PlayersCountButton)_playersCount.Current).Players,
+                StartingCash = _startingCash.Value,
                 Difficulty = GetDifficulty()
             });
             HidePage();
