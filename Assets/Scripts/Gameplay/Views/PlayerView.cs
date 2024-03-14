@@ -6,6 +6,7 @@ using Poker.Gameplay.Core.Models;
 using Poker.Gameplay.Core.States;
 using TMPro;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace Poker.Gameplay.Views
 {
@@ -17,7 +18,7 @@ namespace Poker.Gameplay.Views
 		[SerializeField] private TextMeshPro _name;
 		[SerializeField] private CardView _card1;
 		[SerializeField] private CardView _card2;
-		[SerializeField] private TextMeshProUGUI _combination;
+		[SerializeField] private StatusView Status;
 		[SerializeField] private BetView _bet;
 		
 		[Dependency] private GameManager _gameManager;
@@ -27,6 +28,7 @@ namespace Poker.Gameplay.Views
 		
 		private PlayerState _player;
 		private bool _revealCards;
+		private VotingResponse? _votingResponse;
 		
 		protected override void InitInnerState()
 		{
@@ -38,25 +40,27 @@ namespace Poker.Gameplay.Views
 			RoundController roundController = _gameManager.Controller.Round;
 			
 			TableState.NewVoterAssigned += NewVoterAssigned;
-			roundController.RoundEnded += RoundEnded;
-			//roundController.RevealCards += RevealCards;
 			TableState.NewCardRevealed += NewCardRevealed;
-		}
-
-		private void RevealCards()
-		{
-			_revealCards = true;
-			DataChanged();
+			roundController.RoundStarted += RoundStarted;
+			roundController.Voting.VotingEnded += VotingEnded;
 		}
 
 		private void NewCardRevealed()
 		{
+			_votingResponse = null;
 			DataChanged();
 		}
 
-		private void RoundEnded()
+		private void VotingEnded()
+		{
+			_votingResponse = null;
+			DataChanged();
+		}
+
+		private void RoundStarted()
 		{
 			_revealCards = false;
+			_votingResponse = null;
 			DataChanged();
 		}
 
@@ -79,13 +83,40 @@ namespace Poker.Gameplay.Views
 			gameObject.SetActive(false);
 		}
 
+		public async UniTask MakeChoiceAnimation(VotingResponse response)
+		{
+			_votingResponse = response;
+			DataChanged();
+			await UniTask.Delay(500);
+		}
+
 		public async UniTask RevealCardsRoundEndAnimation()
 		{
 			_revealCards = true;
-			_card1.RevealCardAnimation().Forget();
-			await UniTask.Delay(100);
 			DataChanged();
-			await _card2.RevealCardAnimation();
+			await UniTask.WhenAll(
+				UniTask.Delay(100).ContinueWith(_card1.RevealAnimation),
+				_card2.RevealAnimation()
+			);
+		}
+		
+		public async UniTask HideCardsRoundEndAnimation()
+		{
+			_votingResponse = null;
+			DataChanged();
+			await UniTask.WhenAll(
+				_card1.HideAnimation(),
+				_card2.HideAnimation()
+			);
+		}
+
+		public async UniTask DealCardsAnimation()
+		{
+			DataChanged();
+			await UniTask.WhenAll(
+				_card1.ShowAnimation(),
+				_card2.ShowAnimation()
+			);
 		}
 
 		private void DataChanged()
@@ -94,13 +125,19 @@ namespace Poker.Gameplay.Views
 			_card1.Revealed = shouldShow;
 			_card2.Revealed = shouldShow;
 
-			if (shouldShow && TableState.CardsRevealed > 0)
+			if (_votingResponse.HasValue)
 			{
-				_combination.text = new Combination(_player.Cards, TableState.Cards.Take(TableState.CardsRevealed)).Name;
+				Status.SetText(_votingResponse.Value.Action.ToString());
+				Status.Show();
+			}
+			else if (shouldShow && TableState.CardsRevealed > 0 && TableState.RoundEnded == false)
+			{
+				Status.SetText(new Combination(_player.Cards, TableState.Cards.Take(TableState.CardsRevealed)).Name);
+				Status.Show();
 			}
 			else
 			{
-				_combination.text = string.Empty;
+				Status.Hide();
 			}
 			
 			if (_player.IsOutOfPlay)
@@ -136,6 +173,11 @@ namespace Poker.Gameplay.Views
 			else if (_player.Folded || _player.IsOutOfPlay)
 			{
 				_name.color = Color.red;
+				if (IsMe == false)
+				{
+					_card1.Hide();
+					_card2.Hide();
+				}
 			}
 			else
 			{

@@ -1,6 +1,8 @@
-﻿using System.Threading;
+﻿using System;
+using System.Threading;
+using AurumGames.CompositeRoot;
 using Cysharp.Threading.Tasks;
-using Poker.Gameplay.Core.Models.VotingContexts;
+using Poker.Gameplay.Core.Models;
 using Poker.Gameplay.Core.States;
 using UnityEngine;
 
@@ -8,46 +10,62 @@ namespace Poker.Gameplay.Core.Controllers
 {
 	public class VotingCycleController
 	{
+		public event Action VotingEnded
+		{
+			add => _votingEnded.Add(value);
+			remove => _votingEnded.Remove(value);
+		}
+		
 		private readonly GameState _state;
+		private readonly AnimationController _animationController;
 		private readonly TableState _table;
+		
+		private IndependentEvent _votingEnded;
 
-		public VotingCycleController(GameState state)
+		public VotingCycleController(GameState state, AnimationController animationController)
 		{
 			_state = state;
+			_animationController = animationController;
 			_table = state.Table;
 		}
 
 		public async UniTask StartVotingCycle()
 		{
+			if (_table.CanSkipVote())
+				return;
+			
 			_table.StartNewVotingCycle();
 			do
 			{
-				using var tokenSource = new CancellationTokenSource();
-				
-				var votingContext = new VotingContext();
-				var thinkingTask = _table.Voter.Logic.MakeVotingAction(votingContext, tokenSource.Token).Preserve();
-				var result = await UniTask.WhenAny(
-					UniTask.Delay(40000, cancellationToken: tokenSource.Token),
-					thinkingTask);
+				if (_table.Voter.CanVote())
+				{
+					using var tokenSource = new CancellationTokenSource();
 
-				if (result == 1)
-				{
-					VotingResponse response = thinkingTask.GetAwaiter().GetResult();
+					var votingContext = new VotingContext();
+					var thinkingTask = _table.Voter.Logic.MakeVotingAction(votingContext, tokenSource.Token).Preserve();
+					var result = await UniTask.WhenAny(
+						UniTask.Delay(40000, cancellationToken: tokenSource.Token),
+						thinkingTask);
+
+					VotingResponse response = VotingResponse.Fold();
+					if (result == 1)
+					{
+						response = thinkingTask.GetAwaiter().GetResult();
+					}
+					else
+					{
+						tokenSource.Cancel();
+					}
 					MakeVoteAction(response);
-					
-					if (response.Action == VotingAction.Raise)
-						_table.ResetVotingCycle();
+
+					await _animationController.MakeChoice(_table.Voter, response);
 				}
-				else
-				{
-					_table.Fold();
-					tokenSource.Cancel();
-				}
-				
+
 				_table.AssignNextVoter();
 				Debug.Log("New voter: " + _table.Voter.Name);
 			} while (_table.IsVotingEnded() == false);
 			_table.EndVotingCycle();
+			_votingEnded.Invoke();
 			
 			Debug.Log("Vote cycle ended");
 		}
@@ -66,6 +84,7 @@ namespace Poker.Gameplay.Core.Controllers
 				
 				case VotingAction.Raise:
 					_table.Raise(response.RaiseAmount);
+					_table.ResetVotingCycle();
 					break;
 			}
 		}

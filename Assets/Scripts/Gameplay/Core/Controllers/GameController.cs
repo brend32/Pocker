@@ -33,7 +33,7 @@ namespace Poker.Gameplay.Core
 
 		private bool IsPlaying()
 		{
-			return _state.Round < 2;
+			return _state.Round < 10;
 		}
 
 		public async UniTask EndGame()

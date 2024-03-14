@@ -43,7 +43,7 @@ namespace Poker.Gameplay.Core
 			_state = state;
 			_animationController = animationController;
 			_table = state.Table;
-			Voting = new VotingCycleController(state);
+			Voting = new VotingCycleController(state, animationController);
 		}
 		
 		public async UniTask StartRound()
@@ -67,7 +67,7 @@ namespace Poker.Gameplay.Core
 			Debug.Log("Decide winner");
 			await Task.Delay(5000);
 			
-			EndRound();
+			await EndRound();
 		}
 
 		public async UniTask StartVotingCycle()
@@ -76,10 +76,11 @@ namespace Poker.Gameplay.Core
 			await Voting.StartVotingCycle();
 		}
 
-		public void EndRound()
+		public async UniTask EndRound()
 		{
 			_table.EndRound();
 			_roundEnded.Invoke();
+			await _animationController.RoundEnd();
 			Debug.Log("Round ended");
 		}
 	}

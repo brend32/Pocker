@@ -2,6 +2,8 @@
 using Cysharp.Threading.Tasks;
 using Poker.Gameplay.Core;
 using Poker.Gameplay.Core.Controllers;
+using Poker.Gameplay.Core.Models;
+using Poker.Gameplay.Core.States;
 using UnityEngine;
 
 namespace Poker.Gameplay.Views
@@ -25,7 +27,7 @@ namespace Poker.Gameplay.Views
 
 		public UniTask DealCards()
 		{
-			return _tableCardsView.DealCardsAnimation();
+			return _playersView.DealCardsAnimation().ContinueWith(_tableCardsView.DealCardsAnimation);
 		}
 
 		public UniTask RevealCard()
@@ -38,9 +40,14 @@ namespace Poker.Gameplay.Views
 			return _playersView.RevealOthersCardsRoundEndAnimation();
 		}
 
-		public UniTask MakeChoice()
+		public UniTask MakeChoice(PlayerState player, VotingResponse response)
 		{
-			return UniTask.CompletedTask;
+			return _playersView.MakeChoiceAnimation(player, response);
+		}
+
+		public UniTask RoundEnd()
+		{
+			return UniTask.WhenAll(_tableCardsView.HideCardsRoundEndAnimation(), _playersView.HideCardsRoundEndAnimation());
 		}
 	}
 }

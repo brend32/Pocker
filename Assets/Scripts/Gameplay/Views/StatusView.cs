@@ -1,19 +1,27 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using AurumGames.Animation;
 using AurumGames.Animation.Tracks;
 using AurumGames.CompositeRoot;
 using AurumGames.CustomLayout;
+using Poker.Gameplay.Core;
+using Poker.Gameplay.Core.Models;
+using Poker.Gameplay.Core.States;
 using TMPro;
 using UnityEngine;
 
 namespace Poker.Gameplay.Views
 {
-	public class BetView : LazyMonoBehaviour
+	public partial class StatusView : LazyMonoBehaviour
 	{
 		[SerializeField] private RectTransform _transform;
 		[SerializeField] private TextMeshProUGUI _text;
 		[SerializeField] private CustomLayoutBase _layout;
 
+		[Dependency] private GameManager _gameManager;
+		private TableState TableState => _gameManager.State.Table;
+		
+		private PlayerState _player;
 		private StatedAnimationPlayer<Visibility> _animation;
 		
 		protected override void InitInnerState()
@@ -25,8 +33,8 @@ namespace Poker.Gameplay.Views
 			{
 				new AnchoredPositionTrack(_transform, new []
 				{
-					new KeyFrame<Vector2>(0, new Vector2(rect.width * -1, position.y), Easing.QuintOut),
-					new KeyFrame<Vector2>(450, new Vector2(-30, position.y), Easing.QuintOut),
+					new KeyFrame<Vector2>(0, new Vector2(position.x, rect.height), Easing.QuintOut),
+					new KeyFrame<Vector2>(450, new Vector2(position.x, -10), Easing.QuintOut),
 				})
 			});
 
@@ -34,8 +42,8 @@ namespace Poker.Gameplay.Views
 			{
 				new AnchoredPositionTrack(_transform, new []
 				{
-					new KeyFrame<Vector2>(0, new Vector2(-30, position.y), Easing.QuintIn),
-					new KeyFrame<Vector2>(450, new Vector2(rect.width * -1, position.y), Easing.QuintOut),
+					new KeyFrame<Vector2>(0, new Vector2(position.x, -10), Easing.QuintIn),
+					new KeyFrame<Vector2>(450, new Vector2(position.x, rect.height), Easing.QuintOut),
 				})
 			});
 
@@ -64,9 +72,9 @@ namespace Poker.Gameplay.Views
 				_animation.SetState(Visibility.Hidden);
 		}
 
-		public void SetBet(int value)
+		public void SetText(string text)
 		{
-			_text.text = $"Bet\n<b>${value}";
+			_text.text = text;
 			_layout.UpdateLayout();
 		} 
 	}

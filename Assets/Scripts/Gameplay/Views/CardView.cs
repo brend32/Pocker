@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using AurumGames.Animation;
 using AurumGames.Animation.Tracks;
 using AurumGames.CompositeRoot;
@@ -34,7 +35,8 @@ namespace Poker.Gameplay.Views
 
 		private Material _face;
 
-		private AnimationPlayer _revealCardPlayer;
+		private AnimationPlayer _revealPlayer;
+		private StatedAnimationPlayer<Visibility> _visibilityPlayer;
 		
 		protected override void InitInnerState()
 		{
@@ -44,7 +46,7 @@ namespace Poker.Gameplay.Views
 
 			Vector3 position = self.localPosition;
 
-			_revealCardPlayer = new AnimationPlayer(this, new ITrack[]
+			_revealPlayer = new AnimationPlayer(this, new ITrack[]
 			{
 				new LocalEulerAnglesTrack(self, new []
 				{
@@ -58,6 +60,33 @@ namespace Poker.Gameplay.Views
 					new KeyFrame<Vector3>(700, new Vector3(position.x, 0, position.z), Easing.QuintIn),
 				})
 			});
+
+			Vector3 scale = self.localScale;
+			
+			var show = new TracksEvaluator(new ITrack[]
+			{
+				new ScaleTrack(self, new []
+				{
+					new KeyFrame<Vector3>(0, Vector3.zero, Easing.QuintOut),
+					new KeyFrame<Vector3>(400, scale, Easing.QuintOut),
+				})
+			});
+
+			var hide = new TracksEvaluator(new ITrack[]
+			{
+				new ScaleTrack(self, new []
+				{
+					new KeyFrame<Vector3>(0, scale, Easing.CubicIn),
+					new KeyFrame<Vector3>(400, Vector3.zero, Easing.QuintOut),
+				})
+			});
+
+			_visibilityPlayer = new StatedAnimationPlayer<Visibility>(this, new Dictionary<Visibility, TracksEvaluator>()
+			{
+				{ Visibility.Visible, show },
+				{ Visibility.Hidden, hide },
+			});
+			_visibilityPlayer.SetStateInstant(Visibility.Hidden);
 			
 			UpdateCardTexture();
 		}
@@ -67,12 +96,30 @@ namespace Poker.Gameplay.Views
 			
 		}
 
-		public async UniTask RevealCardAnimation()
+		public async UniTask RevealAnimation()
 		{
-			_revealCardPlayer.PlayFromStart();
+			_revealPlayer.PlayFromStart();
 			Revealed = true;
 
-			await UniTask.WaitWhile(() => _revealCardPlayer.IsPlaying);
+			await UniTask.WaitWhile(() => _revealPlayer.IsPlaying);
+		}
+
+		public async UniTask ShowAnimation()
+		{
+			if (_visibilityPlayer.CurrentState == Visibility.Visible)
+				return;
+			
+			_visibilityPlayer.SetState(Visibility.Visible);
+			await UniTask.WaitWhile(() => _visibilityPlayer.IsPlaying);
+		}
+		
+		public async UniTask HideAnimation()
+		{
+			if (_visibilityPlayer.CurrentState == Visibility.Hidden)
+				return;
+			
+			_visibilityPlayer.SetState(Visibility.Hidden);
+			await UniTask.WaitWhile(() => _visibilityPlayer.IsPlaying);
 		}
 
 		public void Bind(CardModel model)
@@ -95,6 +142,18 @@ namespace Poker.Gameplay.Views
 			var materials = _meshRenderer.sharedMaterials;
 			materials[0] = material;
 			_meshRenderer.sharedMaterials = materials;
+		}
+		
+		public void Show()
+		{
+			if (_visibilityPlayer.CurrentState == Visibility.Hidden)
+				_visibilityPlayer.SetState(Visibility.Visible);
+		}
+
+		public void Hide()
+		{
+			if (_visibilityPlayer.CurrentState == Visibility.Visible)
+				_visibilityPlayer.SetState(Visibility.Hidden);
 		}
 		
 #if UNITY_EDITOR

@@ -6,7 +6,6 @@ using AurumGames.CompositeRoot;
 using Cysharp.Threading.Tasks;
 using Poker.Gameplay.Core.Contracts;
 using Poker.Gameplay.Core.Models;
-using Poker.Gameplay.Core.Models.VotingContexts;
 using Poker.UI.Common;
 using UnityEngine;
 
@@ -39,6 +38,11 @@ namespace Poker.Gameplay.Core.States
 			_cards[1] = card2;
 			
 			_dataChanged.Invoke();
+		}
+
+		public bool CanVote()
+		{
+			return Balance > 0 && Folded == false && IsOutOfPlay == false;
 		}
 
 		public void ResetBetState()
@@ -137,7 +141,7 @@ namespace Poker.Gameplay.Core.States
 				await UniTask.Delay(100, cancellationToken: cancellationToken);
 			}
 
-			return VotingResponse.Call();
+			return VotingResponse.Fold();
 		}
 	}
 

@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using AurumGames.CompositeRoot;
 using Poker.Gameplay.Core.Models;
-using Poker.Gameplay.Core.Models.VotingContexts;
 using Poker.Utils;
 using UnityEngine;
 using Random = UnityEngine.Random;
@@ -51,6 +50,7 @@ namespace Poker.Gameplay.Core.States
 		public int VoteEndIndex { get; private set; }
 		public VotingContext VotingContext { get; private set; } = new();
 		public PlayerState Winner { get; private set; }
+		public bool RoundEnded { get; private set; } = true;
 
 		public int Pot
 		{
@@ -82,6 +82,7 @@ namespace Poker.Gameplay.Core.States
 		{
 			Pot = 0;
 			Winner = null;
+			RoundEnded = false;
 			
 			_deck.Clear();
 			_deck.AddRange(Deck);
@@ -93,8 +94,7 @@ namespace Poker.Gameplay.Core.States
 
 		public void EndRound()
 		{
-			//TODO: Decide winner
-
+			RoundEnded = true;
 			Winner = null;
 
 			foreach (PlayerState player in _playersInGame)
@@ -231,6 +231,14 @@ namespace Poker.Gameplay.Core.States
 		public void UpdateListOfPlayerInGame()
 		{
 			_playersInGame.RemoveAll(player => player.IsOutOfPlay);
+		}
+
+		public bool CanSkipVote()
+		{
+			return _playersInGame
+				.Count(player => player.IsAllIn == false && 
+				                 player.IsOutOfPlay == false && 
+				                 player.Folded == false) <= 1;
 		}
 
 		public bool IsVotingEnded()

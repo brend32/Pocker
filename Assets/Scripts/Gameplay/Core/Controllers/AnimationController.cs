@@ -1,4 +1,6 @@
 ﻿using Cysharp.Threading.Tasks;
+using Poker.Gameplay.Core.Models;
+using Poker.Gameplay.Core.States;
 
 namespace Poker.Gameplay.Core.Controllers
 {
@@ -21,14 +23,19 @@ namespace Poker.Gameplay.Core.Controllers
 			return _presenter?.RevealCard() ?? UniTask.CompletedTask;
 		}
 
-		public UniTask MakeChoice()
+		public UniTask MakeChoice(PlayerState player, VotingResponse response)
 		{
-			return _presenter?.MakeChoice() ?? UniTask.CompletedTask;
+			return _presenter?.MakeChoice(player, response) ?? UniTask.CompletedTask;
 		}
 		
 		public UniTask RevealCardsRoundEnd()
 		{
 			return _presenter?.RevealCardsRoundEnd() ?? UniTask.CompletedTask;
+		}
+		
+		public UniTask RoundEnd()
+		{
+			return _presenter?.RoundEnd() ?? UniTask.CompletedTask;
 		}
 	}
 
@@ -36,7 +43,8 @@ namespace Poker.Gameplay.Core.Controllers
 	{
 		UniTask DealCards();
 		UniTask RevealCard();
-		UniTask MakeChoice();
+		UniTask MakeChoice(PlayerState player, VotingResponse response);
 		UniTask RevealCardsRoundEnd();
+		UniTask RoundEnd();
 	}
 }

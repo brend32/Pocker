@@ -1,6 +1,6 @@
 ﻿using AurumGames.CompositeRoot;
 using Poker.Gameplay.Core;
-using Poker.Gameplay.Core.Models.VotingContexts;
+using Poker.Gameplay.Core.Models;
 using Poker.Gameplay.Core.States;
 using TMPro;
 using UnityEngine;
@@ -16,6 +16,7 @@ namespace Poker.Gameplay.Views
 		private TableState Table => _gameManager.State.Table;
 		private PlayerState _player;
 		private UserLogic _logic;
+		private bool _answered;
 		
 		protected override void InitInnerState()
 		{
@@ -41,12 +42,13 @@ namespace Poker.Gameplay.Views
 
 		private void NewVoterAssigned()
 		{
+			_answered = false;
 			UpdateView();
 		}
 
 		private void UpdateView()
 		{
-			var isOurTurn = _player == Table.Voter;
+			var isOurTurn = _player == Table.Voter && _answered == false;
 
 			_canvasGroup.blocksRaycasts = isOurTurn;
 			_canvasGroup.alpha = isOurTurn ? 1 : 0.7f;
@@ -54,17 +56,23 @@ namespace Poker.Gameplay.Views
 
 		public void Call()
 		{
+			_answered = true;
 			_logic.MakeChoice(VotingResponse.Call());
+			UpdateView();
 		}
 
 		public void Fold()
 		{
+			_answered = true;
 			_logic.MakeChoice(VotingResponse.Fold());
+			UpdateView();
 		}
 
 		public void Raise()
 		{
+			_answered = true;
 			_logic.MakeChoice(VotingResponse.Raise(int.Parse(_bet.text)));
+			UpdateView();
 		}
 	}
 }

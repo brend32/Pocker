@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using AurumGames.Animation;
 using AurumGames.Animation.Tracks;
 using AurumGames.CompositeRoot;
@@ -15,64 +16,55 @@ namespace Poker.Gameplay.Views
 
 		[Dependency] private GameManager _gameManager;
 		private TableState TableState => _gameManager.State.Table;
-
-		private AnimationPlayer _dealCardsPlayer;
 		
 		protected override void InitInnerState()
 		{
-			DealCardsAnimationSetup();
-		}
-
-		private void DealCardsAnimationSetup()
-		{
-			var tracks = new ITrack[_cardViews.Length];
-			for (int i = 0; i < tracks.Length; i++)
-			{
-				var transition = new TransitionStruct(600, Easing.QuintInOut, 200 * i);
-				tracks[i] = new ScaleTrack(_cardViews[i].transform, ScaleTrack.KeyFramesFrom0To(Vector3.one, transition));
-				_cardViews[i].transform.localScale = Vector3.zero;
-			}
-
-			_dealCardsPlayer = new AnimationPlayer(this, tracks);
+			
 		}
 
 		protected override void Initialized()
 		{
-			//_gameManager.State.Table.NewCardRevealed += NewCardRevealed;
-			_gameManager.Controller.Round.RoundStarted += RoundStarted;
+			
 		}
 
+		public async UniTask HideCardsRoundEndAnimation()
+		{
+			var tasks = _cardViews.Select(cardView => cardView.HideAnimation());
+
+			await UniTask.WhenAll(tasks);
+		}
+		
 		public async UniTask DealCardsAnimation()
 		{
-			_dealCardsPlayer.PlayFromStart();
-			await UniTask.WaitWhile(() => _dealCardsPlayer.IsPlaying);
+			UpdateView();
+			List<UniTask> tasks = new();
+
+			var delay = 0;
+			foreach (CardView cardView in _cardViews)
+			{
+				tasks.Add(UniTask.Delay(delay).ContinueWith(cardView.ShowAnimation));
+				delay += 150;
+			}
+			
+			await UniTask.WhenAll(tasks);
 		}
 
 		public async UniTask RevealCardAnimation()
 		{
-			UniTask last = UniTask.CompletedTask;
-			
+			List<UniTask> tasks = new();
+
+			var delay = 0;
 			for (var i = 0; i < TableState.CardsRevealed; i++)
 			{
 				CardView cardView = _cardViews[i];
 				if (cardView.Revealed)
 					continue;
-				
-				last = cardView.RevealCardAnimation();
-				await UniTask.Delay(100);
+
+				tasks.Add(UniTask.Delay(delay).ContinueWith(cardView.RevealAnimation));
+				delay += 100;
 			}
 			
-			await last;
-		}
-		
-		private void RoundStarted()
-		{
-			UpdateView();
-		}
-
-		private void NewCardRevealed()
-		{
-			UpdateView();
+			await UniTask.WhenAll(tasks);
 		}
 
 		[EasyButtons.Button]

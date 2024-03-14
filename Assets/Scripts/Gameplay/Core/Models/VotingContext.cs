@@ -1,7 +1,7 @@
 ﻿using System;
 using Poker.Gameplay.Core.States;
 
-namespace Poker.Gameplay.Core.Models.VotingContexts
+namespace Poker.Gameplay.Core.Models
 {
 	public enum VotingAction
 	{
