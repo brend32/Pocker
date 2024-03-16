@@ -4,6 +4,7 @@ using AurumGames.Animation.Tracks;
 using Poker.Gameplay.Core;
 using Poker.UI.Common;
 using UnityEngine;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 using Button = Poker.UI.Common.Button;
 using ToggleGroup = Poker.UI.Common.ToggleGroup;
@@ -14,20 +15,28 @@ namespace Poker.UI.ChooseDifficulty
     {
         public Difficulty Difficulty;
         public RectTransform Transform => _transform;
+        public Vector3 Scale => _optionSelected ? _selectedScale : Vector3.one;
         
         private RectTransform _transform;
         [SerializeField] private Image _shadow;
         [SerializeField] private Image _selected;
-        [SerializeField] private Color _hoverColor;
+        [SerializeField] private Image _image;
+        [SerializeField] private Vector3 _selectedScale;
         [SerializeField] private Color _normalColor;
+        [SerializeField] private Color _hoverColor;
+        [SerializeField] private Color _selectedColor;
+        [FormerlySerializedAs("_hoverColor")] [SerializeField] private Color _hoverShadowColor;
+        [FormerlySerializedAs("_normalColor")] [SerializeField] private Color _normalShadowColor;
         [SerializeField] private ToggleGroup _toggleGroup;
 
-        private StatedFluentAnimationPlayer<bool> _selectedAnimation;
+        private StatedFluentAnimationPlayer<State> _animation;
+        private bool _optionSelected;
         
         protected override void InitInnerState()
         {
             _transform = (RectTransform)transform;
-            _shadow.color = _normalColor;
+            _shadow.color = _normalShadowColor;
+            _image.color = _normalColor;
             _toggleGroup.SelectionChanged += SelectionChanged;
             OnClick.AddListener(Select);
             base.InitInnerState();
@@ -42,56 +51,48 @@ namespace Poker.UI.ChooseDifficulty
         {
             if (current is DifficultyCardButton cardButton)
             {
-                _selectedAnimation.SetState(cardButton == this);
+                _optionSelected = cardButton == this;
+                _animation.SetState(_animation.CurrentState);
             }
         }
 
         protected override StatedFluentAnimationPlayer<State> SetupAnimations()
         {
-            var selectedColorTrack = new FluentImageAlphaTrack(_selected, new Transition(240, Easing.QuadOut));
-            _selectedAnimation = new StatedFluentAnimationPlayer<bool>(this, selectedColorTrack);
-            _selectedAnimation.StateChanged += (previous, current, options) =>
-            {
-                switch (current)
-                {
-                    case true:
-                        selectedColorTrack.Set(1, options);
-                        break;
-                    
-                    case false:
-                        selectedColorTrack.Set(0, options);
-                        break;
-                }
-            };
-            _selectedAnimation.SetStateInstant(false);
-            
-            var shadowColorTrack = new FluentImageColorTrack(_shadow, new Transition(240, Easing.QuadOut));
+            var selectedShadowAlphaTrack = new FluentImageAlphaTrack(_selected, new Transition(240, Easing.QuadOut));
+            var colorTrack = new FluentImageColorTrack(_image, new Transition(240, Easing.QuadOut));
             var scaleTrack = new FluentScaleTrack(_transform, new Transition(240, Easing.QuadOut));
-
-            var player = new StatedFluentAnimationPlayer<State>(this, shadowColorTrack, scaleTrack);
+            var shadowColorTrack = new FluentImageColorTrack(_shadow, new Transition(240, Easing.QuadOut));
+            
+            var player = new StatedFluentAnimationPlayer<State>(this, shadowColorTrack, scaleTrack, colorTrack, selectedShadowAlphaTrack);
             player.StateChanged += (previous, current, options) =>
             {
+                selectedShadowAlphaTrack.Set(_optionSelected ? 1 : 0);
+                
                 switch (current)
                 {
                     case State.Normal:
-                        shadowColorTrack.Set(_normalColor, options);
-                        scaleTrack.Set(Vector3.one, options);
+                        shadowColorTrack.Set(_normalShadowColor, options);
+                        scaleTrack.Set(_optionSelected ? _selectedScale : Vector3.one, options);
+                        colorTrack.Set(_optionSelected ? _selectedColor : _normalColor);
                         break;
                     
                     case State.Hover:
                     case State.Pressed:
-                        shadowColorTrack.Set(_hoverColor, options);
+                        shadowColorTrack.Set(_hoverShadowColor, options);
+                        colorTrack.Set(_optionSelected ? _selectedColor : _hoverColor);
+                        
                         if (current == State.Pressed)
                         {
                             scaleTrack.Set(Vector3.one * 0.93f, options);
                         }
                         else
                         {
-                            scaleTrack.Set(Vector3.one, options);
+                            scaleTrack.Set(_optionSelected ? _selectedScale : Vector3.one, options);
                         }
                         break;
                 }
             };
+            _animation = player;
             
             return player;
         }
@@ -103,7 +104,7 @@ namespace Poker.UI.ChooseDifficulty
 
         private void OnValidate()
         {
-            _shadow.color = _normalColor;
+            _shadow.color = _normalShadowColor;
         }
     }
 }

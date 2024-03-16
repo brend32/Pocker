@@ -53,10 +53,11 @@ namespace Poker.Screens
             var difficultyCardsShow = new ITrack[_difficultyButtons.Length];
             for (int i = 0; i < _difficultyButtons.Length; i++)
             {
-                difficultyCardsShow[i] = new ScaleTrack(_difficultyButtons[i].Transform, new []
+                DifficultyCardButton target = _difficultyButtons[i];
+                difficultyCardsShow[i] = new ScaleTrack(target.Transform, new []
                 {
                     new KeyFrame<Vector3>(50 * i, Vector3.zero, Easing.OutBack),
-                    new KeyFrame<Vector3>(300 + 50 * i, Vector3.one, Easing.OutBack),
+                    new KeyFrame<Vector3>(300 + 50 * i, () => target.Scale, Easing.OutBack),
                 });
             }
             
@@ -82,9 +83,10 @@ namespace Poker.Screens
             var difficultyCardsHide = new ITrack[_difficultyButtons.Length];
             for (int i = 0; i < _difficultyButtons.Length; i++)
             {
-                difficultyCardsHide[i] = new ScaleTrack(_difficultyButtons[i].Transform, new []
+                DifficultyCardButton target = _difficultyButtons[i];
+                difficultyCardsHide[i] = new ScaleTrack(target.Transform, new []
                 {
-                    new KeyFrame<Vector3>(30 * i, Vector3.one, Easing.QuadOut),
+                    new KeyFrame<Vector3>(30 * i, () => target.Scale, Easing.QuadOut),
                     new KeyFrame<Vector3>(240 + 30 * i, Vector3.zero, Easing.OutBack),
                 });
             }
