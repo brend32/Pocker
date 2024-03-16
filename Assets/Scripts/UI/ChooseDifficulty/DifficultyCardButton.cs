@@ -13,6 +13,8 @@ namespace Poker.UI.ChooseDifficulty
     public class DifficultyCardButton : Button, IToggleOption
     {
         public Difficulty Difficulty;
+        public RectTransform Transform => _transform;
+        
         private RectTransform _transform;
         [SerializeField] private Image _shadow;
         [SerializeField] private Image _selected;

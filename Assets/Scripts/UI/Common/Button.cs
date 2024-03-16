@@ -29,6 +29,11 @@ namespace Poker.UI.Common
             _animation.SetStateInstant(State.Normal);
         }
 
+        public void CancelAnimation()
+        {
+            _animation.Stop();
+        }
+
         public void OnPointerDown(PointerEventData eventData)
         {
             _pointerId = eventData.pointerId;
