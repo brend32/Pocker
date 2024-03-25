@@ -57,7 +57,7 @@ namespace Poker.Gameplay.Views
 
 		protected override void Initialized()
 		{
-			
+			_animation.TimeSource = _gameManager.TimeSource;
 		}
 
 		public void Show()

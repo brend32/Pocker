@@ -46,8 +46,8 @@ namespace Poker.Screens
             {
                 cardsShow[i] = new AnchoredPositionTrack(_buttons[i].Transform, new []
                 {
-                    new KeyFrame<Vector2>(50 * i, from, Easing.OutBack),
-                    new KeyFrame<Vector2>(300 + 50 * i, Vector2.zero, Easing.OutBack),
+                    new KeyFrame<Vector2>(150 + 50 * i, from, Easing.OutBack),
+                    new KeyFrame<Vector2>(450 + 50 * i, Vector2.zero, Easing.OutBack),
                 });
             }
             var difficultyCardsShow = new ITrack[_difficultyButtons.Length];
@@ -86,7 +86,7 @@ namespace Poker.Screens
                 DifficultyCardButton target = _difficultyButtons[i];
                 difficultyCardsHide[i] = new ScaleTrack(target.Transform, new []
                 {
-                    new KeyFrame<Vector3>(30 * i, () => target.Scale, Easing.QuadOut),
+                    new KeyFrame<Vector3>(30 * i, () => target.Scale, Easing.QuintOut),
                     new KeyFrame<Vector3>(240 + 30 * i, Vector3.zero, Easing.OutBack),
                 });
             }

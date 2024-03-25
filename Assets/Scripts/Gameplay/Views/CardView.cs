@@ -5,6 +5,7 @@ using AurumGames.Animation.Tracks;
 using AurumGames.CompositeRoot;
 using Cysharp.Threading.Tasks;
 using Poker.Gameplay.Configuration;
+using Poker.Gameplay.Core;
 using Poker.Gameplay.Core.Models;
 using TMPro;
 using UnityEngine;
@@ -32,6 +33,7 @@ namespace Poker.Gameplay.Views
 		public TextMeshPro DebugText;
 
 		[Dependency] private CardsDatabase _cardsDatabase;
+		[Dependency] private GameManager _gameManager;
 
 		private Material _face;
 
@@ -93,12 +95,14 @@ namespace Poker.Gameplay.Views
 
 		protected override void Initialized()
 		{
-			
+			_visibilityPlayer.TimeSource = _gameManager.TimeSource;
+			_revealPlayer.TimeSource = _gameManager.TimeSource;
 		}
 
 		public async UniTask RevealAnimation()
 		{
-			_revealPlayer.PlayFromStart();
+			_revealPlayer.JumpStart();
+			_revealPlayer.Play();
 			Revealed = true;
 
 			await UniTask.WaitWhile(() => _revealPlayer.IsPlaying);

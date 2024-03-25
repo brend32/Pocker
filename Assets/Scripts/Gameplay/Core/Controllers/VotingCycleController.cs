@@ -15,15 +15,17 @@ namespace Poker.Gameplay.Core.Controllers
 			add => _votingEnded.Add(value);
 			remove => _votingEnded.Remove(value);
 		}
-		
+
+		private readonly GameManager _gameManager;
 		private readonly GameState _state;
 		private readonly AnimationController _animationController;
 		private readonly TableState _table;
 		
 		private IndependentEvent _votingEnded;
 
-		public VotingCycleController(GameState state, AnimationController animationController)
+		public VotingCycleController(GameManager gameManager, GameState state, AnimationController animationController)
 		{
+			_gameManager = gameManager;
 			_state = state;
 			_animationController = animationController;
 			_table = state.Table;
@@ -50,15 +52,18 @@ namespace Poker.Gameplay.Core.Controllers
 					}
 					else
 					{
+						if (i == 2 && _table.CardsRevealed == 0)
+							_table.ResetVotingCycle();
+						
 						using var tokenSource = new CancellationTokenSource();
 
 						var votingContext = new VotingContext();
 						var thinkingTask = _table.Voter.Logic.MakeVotingAction(votingContext, tokenSource.Token).Preserve();
 						var result = await UniTask.WhenAny(
-							UniTask.Delay(40000, cancellationToken: tokenSource.Token),
+							_gameManager.DelayAsync(40000, cancellationToken: tokenSource.Token),
 							thinkingTask);
 
-					
+						
 						if (result == 1)
 						{
 							response = thinkingTask.GetAwaiter().GetResult();
@@ -76,7 +81,7 @@ namespace Poker.Gameplay.Core.Controllers
 				_table.AssignNextVoter();
 				Debug.Log("New voter: " + _table.Voter.Name);
 				i++;
-			} while (_table.IsVotingEnded() == false && _table.CanSkipVote() == false);
+			} while (_table.IsVotingEnded() == false);
 			_table.EndVotingCycle();
 			_votingEnded.Invoke();
 			
@@ -85,6 +90,7 @@ namespace Poker.Gameplay.Core.Controllers
 
 		private void MakeVoteAction(VotingResponse response)
 		{
+			Debug.Log(response.Action);
 			switch (response.Action)
 			{
 				case VotingAction.Call:
@@ -97,7 +103,6 @@ namespace Poker.Gameplay.Core.Controllers
 				
 				case VotingAction.Raise:
 					_table.Raise(response.RaiseAmount);
-					_table.ResetVotingCycle();
 					break;
 			}
 		}

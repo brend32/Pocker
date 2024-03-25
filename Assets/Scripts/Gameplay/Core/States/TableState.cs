@@ -35,6 +35,11 @@ namespace Poker.Gameplay.Core.States
 			add => _newVoterAssigned.Add(value);
 			remove => _newVoterAssigned.Remove(value);
 		}
+		public event Action<PlayerState> DecidedWinner
+		{
+			add => _decidedWinner.Add(value);
+			remove => _decidedWinner.Remove(value);
+		}
 
 		public PlayerState Voter => IsVoting ? _playersInGame[VoterIndex] : null;
 
@@ -70,6 +75,7 @@ namespace Poker.Gameplay.Core.States
 		private IndependentEvent _newCardRevealed;
 		private IndependentEvent _newVoterAssigned;
 		private IndependentEvent _potChanged;
+		private IndependentEvent<PlayerState> _decidedWinner;
 		private int _pot;
 		private int _firstVoterIndex = -1;
 
@@ -150,9 +156,13 @@ namespace Poker.Gameplay.Core.States
 			if (amount <= 0)
 				throw new Exception("Can't raise amount is less or equal 0");
 			
-			VotingContext.MinimumBet += amount;
-			var bet = Voter.MakeBet(VotingContext.MinimumBet);
+			var bet = Voter.MakeBet(VotingContext.MinimumBet + amount);
+			if (bet == 0)
+				return;
+			
+			VotingContext.MinimumBet += bet;
 			Pot += bet;
+			ResetVotingCycle();
 		}
 
 		public void ResetVotingCycle()
@@ -193,7 +203,6 @@ namespace Poker.Gameplay.Core.States
 					break;
 			}
 			
-			Debug.Log($"C: {current}, N: {VoterIndex}, E: {VoteEndIndex}");
 			_newVoterAssigned.Invoke();
 		}
 
@@ -244,7 +253,9 @@ namespace Poker.Gameplay.Core.States
 
 		public bool IsVotingEnded()
 		{
-			return VoteEndIndex == VoterIndex;
+			return VoteEndIndex == VoterIndex || _playersInGame
+				.Count(player => player.IsOutOfPlay == false && 
+				                 player.Folded == false) <= 1;
 		}
 
 		public bool IsAllCardsRevealed()
@@ -257,7 +268,7 @@ namespace Poker.Gameplay.Core.States
 			var activePlayers = _playersInGame
 				.Where(player => player.Folded == false).ToArray();
 			var highestCombination = -1;
-			PlayerState playerWithHighestCombination = null;
+			PlayerState playerWithHighestCombination = _playersInGame[0];
 
 			foreach (PlayerState player in activePlayers)
 			{
@@ -270,21 +281,11 @@ namespace Poker.Gameplay.Core.States
 			}
 			
 			Winner = playerWithHighestCombination;
-			if (Winner is BotState bot)
-			{
-				bot.Win();
-			}
-			foreach (PlayerState player in activePlayers)
-			{
-				if (player != Winner && player is BotState lostBot)
-				{
-					lostBot.Lose();
-				}
-			}
+			_decidedWinner.Invoke(Winner);
 			
 			Debug.Log(Winner.Name);
 			
-			playerWithHighestCombination!.GiveMoney(Pot);
+			playerWithHighestCombination.GiveMoney(Pot);
 			
 			Pot = 0;
 		}

@@ -9,11 +9,10 @@ using UnityEngine;
 
 namespace Poker.Gameplay.Views
 {
-	public partial class BetView : LazyMonoBehaviour
+	public partial class FoldOutView : LazyMonoBehaviour
 	{
 		[SerializeField] private RectTransform _transform;
-		[SerializeField] private TextMeshProUGUI _text;
-		[SerializeField] private CustomLayoutBase _layout;
+		[SerializeField] private CanvasGroup _canvasGroup;
 
 		[Dependency] private GameManager _gameManager;
 		
@@ -21,25 +20,16 @@ namespace Poker.Gameplay.Views
 		
 		protected override void InitInnerState()
 		{
-			Rect rect = _transform.rect;
-			Vector2 position = _transform.anchoredPosition;
-			
 			var show = new TracksEvaluator(new ITrack[]
 			{
-				new AnchoredPositionTrack(_transform, new []
-				{
-					new KeyFrame<Vector2>(0, new Vector2(rect.width * -1, position.y), Easing.QuintOut),
-					new KeyFrame<Vector2>(450, new Vector2(-30, position.y), Easing.QuintOut),
-				})
+				new ScaleTrack(_transform, ScaleTrack.KeyFramesFrom0To(Vector3.one, new TransitionStruct(350, Easing.OutBack, 100))),
+				new CanvasGroupOpacityTrack(_canvasGroup, FloatTrack.KeyFrames01(new TransitionStruct(300, Easing.QuadOut, 100)))
 			});
 
 			var hide = new TracksEvaluator(new ITrack[]
 			{
-				new AnchoredPositionTrack(_transform, new []
-				{
-					new KeyFrame<Vector2>(0, new Vector2(-30, position.y), Easing.QuintIn),
-					new KeyFrame<Vector2>(450, new Vector2(rect.width * -1, position.y), Easing.QuintOut),
-				})
+				new ScaleTrack(_transform, ScaleTrack.KeyFramesFromTo0(Vector3.one, new TransitionStruct(240, Easing.QuintIn))),
+				new CanvasGroupOpacityTrack(_canvasGroup, FloatTrack.KeyFrames10(new TransitionStruct(300, Easing.QuintIn)))
 			});
 
 			_animation = new StatedAnimationPlayer<Visibility>(this, new Dictionary<Visibility, TracksEvaluator>()
@@ -66,11 +56,5 @@ namespace Poker.Gameplay.Views
 			if (_animation.CurrentState == Visibility.Visible)
 				_animation.SetState(Visibility.Hidden);
 		}
-
-		public void SetBet(int value)
-		{
-			_text.text = $"Bet\n<b>${value}";
-			_layout.UpdateLayout();
-		} 
 	}
 }

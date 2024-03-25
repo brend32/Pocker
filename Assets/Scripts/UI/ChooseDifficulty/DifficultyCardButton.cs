@@ -66,20 +66,20 @@ namespace Poker.UI.ChooseDifficulty
             var player = new StatedFluentAnimationPlayer<State>(this, shadowColorTrack, scaleTrack, colorTrack, selectedShadowAlphaTrack);
             player.StateChanged += (previous, current, options) =>
             {
-                selectedShadowAlphaTrack.Set(_optionSelected ? 1 : 0);
+                selectedShadowAlphaTrack.Set(_optionSelected ? 1 : 0, options);
                 
                 switch (current)
                 {
                     case State.Normal:
                         shadowColorTrack.Set(_normalShadowColor, options);
                         scaleTrack.Set(_optionSelected ? _selectedScale : Vector3.one, options);
-                        colorTrack.Set(_optionSelected ? _selectedColor : _normalColor);
+                        colorTrack.Set(_optionSelected ? _selectedColor : _normalColor, options);
                         break;
                     
                     case State.Hover:
                     case State.Pressed:
                         shadowColorTrack.Set(_hoverShadowColor, options);
-                        colorTrack.Set(_optionSelected ? _selectedColor : _hoverColor);
+                        colorTrack.Set(_optionSelected ? _selectedColor : _hoverColor, options);
                         
                         if (current == State.Pressed)
                         {

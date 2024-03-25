@@ -42,7 +42,7 @@ namespace Poker.Gameplay.Views
 			var delay = 0;
 			foreach (CardView cardView in _cardViews)
 			{
-				tasks.Add(UniTask.Delay(delay).ContinueWith(cardView.ShowAnimation));
+				tasks.Add(_gameManager.DelayAsync(delay).ContinueWith(cardView.ShowAnimation));
 				delay += 150;
 			}
 			
@@ -60,7 +60,7 @@ namespace Poker.Gameplay.Views
 				if (cardView.Revealed)
 					continue;
 
-				tasks.Add(UniTask.Delay(delay).ContinueWith(cardView.RevealAnimation));
+				tasks.Add(_gameManager.DelayAsync(delay).ContinueWith(cardView.RevealAnimation));
 				delay += 100;
 			}
 			

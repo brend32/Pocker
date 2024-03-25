@@ -7,7 +7,7 @@ namespace Poker.Gameplay.Views
 {
 	public partial class TableView : LazyMonoBehaviour
 	{
-		[SerializeField] private TextMeshPro _pot;
+		[SerializeField] private BalanceView _pot;
 		
 		[Dependency] private GameManager _gameManager;
 		
@@ -24,7 +24,7 @@ namespace Poker.Gameplay.Views
 
 		private void PotChanged()
 		{
-			_pot.text = $"Pot: {_gameManager.State.Table.Pot}$";
+			_pot.SetValue(_gameManager.State.Table.Pot);
 		}
 	}
 }

@@ -29,7 +29,8 @@ namespace Poker.Gameplay.Core
 		}
 		
 		public VotingCycleController Voting { get; }
-		
+
+		private readonly GameManager _gameManager;
 		private readonly GameState _state;
 		private readonly AnimationController _animationController;
 		private readonly TableState _table;
@@ -38,12 +39,13 @@ namespace Poker.Gameplay.Core
 		private IndependentEvent _roundEnded;
 		private IndependentEvent _revealCards;
 
-		public RoundController(GameState state, AnimationController animationController)
+		public RoundController(GameManager gameManager, GameState state, AnimationController animationController)
 		{
+			_gameManager = gameManager;
 			_state = state;
 			_animationController = animationController;
 			_table = state.Table;
-			Voting = new VotingCycleController(state, animationController);
+			Voting = new VotingCycleController(gameManager, state, animationController);
 		}
 		
 		public async UniTask StartRound()
@@ -64,7 +66,7 @@ namespace Poker.Gameplay.Core
 			await _animationController.RevealCardsRoundEnd();
 			_table.DecideWinner();
 			Debug.Log("Decide winner");
-			await Task.Delay(5000);
+			await _gameManager.DelayAsync(5000);
 			
 			await EndRound();
 		}

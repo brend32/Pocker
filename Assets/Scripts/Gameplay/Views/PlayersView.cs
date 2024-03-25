@@ -69,7 +69,7 @@ namespace Poker.Gameplay.Views
 					continue;
 
 				await playerView.RevealCardsRoundEndAnimation();
-				await UniTask.Delay(500);
+				await _gameManager.DelayAsync(500);
 			}
 		}
 		
@@ -90,7 +90,7 @@ namespace Poker.Gameplay.Views
 				if (state.Folded || state.IsOutOfPlay)
 					return UniTask.CompletedTask;
 				
-				return playerView.DealCardsAnimation().ContinueWith(() => UniTask.Delay(50));
+				return playerView.DealCardsAnimation().ContinueWith(() => _gameManager.DelayAsync(50));
 			}
 		}
 		

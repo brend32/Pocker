@@ -65,9 +65,8 @@ namespace Poker.Gameplay.Core.States
 			Confidence -= 1;
 		}
 
-		public static BotState CreateBotPlayer(GameSettings gameSettings, GameState state, string name)
+		public static BotState CreateBotPlayer(GameManager gameManager, GameSettings gameSettings, GameState state, string name)
 		{
-			
 			var player = new BotState()
 			{
 				Balance = Mathf.CeilToInt(gameSettings.StartingCash * _cashMap[gameSettings.Difficulty]),
@@ -78,7 +77,7 @@ namespace Poker.Gameplay.Core.States
 				FortuneChance = _fortuneMap[gameSettings.Difficulty] + Random.Range(0, 0.05f),
 				FearFactor = _fearMap[gameSettings.Difficulty] + Random.Range(-0.003f, 0.03f)
 			};
-			var logic = new BotLogic(player, state);
+			var logic = new BotLogic(player, state, gameManager);
 			player.Logic = logic;
 			return player;
 		}
@@ -87,14 +86,28 @@ namespace Poker.Gameplay.Core.States
 	public class BotLogic : IPlayerLogic
 	{
 		private readonly BotState _state;
+		private readonly GameManager _gameManager;
 		private readonly TableState _tableState;
 		private readonly PlayerState _user;
 
-		public BotLogic(BotState state, GameState gameState)
+		public BotLogic(BotState state, GameState gameState, GameManager gameManager)
 		{
 			_state = state;
+			_gameManager = gameManager;
 			_tableState = gameState.Table;
 			_user = gameState.Me;
+
+			_tableState.DecidedWinner += winner =>
+			{
+				if (winner == _state)
+				{
+					_state.Win();
+				}
+				else
+				{
+					_state.Lose();
+				}
+			};
 		}
 
 		private Combination GetCombination()
@@ -134,7 +147,7 @@ namespace Poker.Gameplay.Core.States
 			
 			if (Random.value < _state.FearFactor * (_tableState.CardsRevealed + 1) / 3 && context.MinimumBet > 150)
 			{
-				await UniTask.Delay(Mathf.CeilToInt(Random.value * 550) + 350, cancellationToken: cancellationToken);
+				await _gameManager.DelayAsync(Mathf.CeilToInt(Random.value * 2750) + 350, cancellationToken: cancellationToken);
 				if (_state.Confidence > 6 && Random.value < _state.FearFactor)
 				{
 					Debug.Log("Fear 1");
@@ -158,7 +171,7 @@ namespace Poker.Gameplay.Core.States
 			}
 			
 			Debug.Log($"Sum {sum}, Confidence: {_state.Confidence}, CombinationIndex: {combination.CombinationIndex}");
-			await UniTask.Delay(Mathf.CeilToInt(Random.value * 850) + 150, cancellationToken: cancellationToken);
+			await _gameManager.DelayAsync(Mathf.CeilToInt(Random.value * 2050) + 550, cancellationToken: cancellationToken);
 			if (sum > 30)
 				return VotingResponse.Raise(Random.Range(Mathf.FloorToInt(_state.Balance * 0.45f), _state.Balance));
 			
@@ -179,14 +192,14 @@ namespace Poker.Gameplay.Core.States
 		{
 			if (context.MinimumBet / (float)_state.Balance > 0.25f)
 			{
-				await UniTask.Delay((int)Random.value * 300 + 150);
+				await _gameManager.DelayAsync((int)Random.value * 700 + 150);
 				if (Random.value < _state.FortuneChance == false)
 				{
 					return VotingResponse.Fold();
 				}
 			}
 
-			await UniTask.Delay(50);
+			await _gameManager.DelayAsync(700);
 			return Random.Range(0, 3) switch
 			{
 				1 => VotingResponse.Fold(),

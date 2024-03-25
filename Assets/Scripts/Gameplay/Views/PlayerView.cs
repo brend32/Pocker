@@ -1,4 +1,6 @@
 ﻿using System.Linq;
+using AurumGames.Animation;
+using AurumGames.Animation.Tracks;
 using AurumGames.CompositeRoot;
 using Cysharp.Threading.Tasks;
 using Poker.Gameplay.Core;
@@ -14,12 +16,13 @@ namespace Poker.Gameplay.Views
 	{
 		public PlayerState PlayerState => _player;
 		
-		[SerializeField] private TextMeshPro _balance;
+		[SerializeField] private BalanceView _balance;
 		[SerializeField] private TextMeshPro _name;
 		[SerializeField] private CardView _card1;
 		[SerializeField] private CardView _card2;
 		[SerializeField] private StatusView Status;
 		[SerializeField] private BetView _bet;
+		[SerializeField] private FoldOutView _foldOut;
 		
 		[Dependency] private GameManager _gameManager;
 
@@ -29,10 +32,16 @@ namespace Poker.Gameplay.Views
 		private PlayerState _player;
 		private bool _revealCards;
 		private VotingResponse? _votingResponse;
+		private StatedFluentAnimationPlayer<Color> _playerNameAnimation;
 		
 		protected override void InitInnerState()
 		{
-			
+			var playerNameColorTrack = new FluentTextMeshProColorTrack(_name, new Transition(300, Easing.QuadOut));
+			_playerNameAnimation = new StatedFluentAnimationPlayer<Color>(this, playerNameColorTrack);
+			_playerNameAnimation.StateChanged += (previous, current, options) =>
+			{
+				playerNameColorTrack.Set(current, options);
+			};
 		}
 
 		protected override void Initialized()
@@ -43,6 +52,8 @@ namespace Poker.Gameplay.Views
 			TableState.NewCardRevealed += NewCardRevealed;
 			roundController.RoundStarted += RoundStarted;
 			roundController.Voting.VotingEnded += VotingEnded;
+
+			_playerNameAnimation.TimeSource = _gameManager.TimeSource;
 		}
 
 		private void NewCardRevealed()
@@ -87,7 +98,7 @@ namespace Poker.Gameplay.Views
 		{
 			_votingResponse = response;
 			DataChanged();
-			await UniTask.Delay(500);
+			await _gameManager.DelayAsync(500);
 		}
 
 		public async UniTask RevealCardsRoundEndAnimation()
@@ -95,7 +106,7 @@ namespace Poker.Gameplay.Views
 			_revealCards = true;
 			DataChanged();
 			await UniTask.WhenAll(
-				UniTask.Delay(100).ContinueWith(_card1.RevealAnimation),
+				_gameManager.DelayAsync(100).ContinueWith(_card1.RevealAnimation),
 				_card2.RevealAnimation()
 			);
 		}
@@ -148,7 +159,7 @@ namespace Poker.Gameplay.Views
 			{
 				_name.text = _player.Name;
 			}
-			_balance.text = $"${_player.Balance}";
+			_balance.SetValue(_player.Balance);
 			_card1.Bind(_player.Cards[0]);
 			_card2.Bind(_player.Cards[1]);
 
@@ -164,24 +175,30 @@ namespace Poker.Gameplay.Views
 
 			if (TableState.Winner == _player)
 			{
-				_name.color = Color.yellow;
+				_playerNameAnimation.SetState(new Color(1f, 0.82f, 0.34f));
 			}
 			else if (TableState.IsVoting && TableState.Voter == _player)
 			{
-				_name.color = Color.green;
+				_playerNameAnimation.SetState(new Color(0.15f, 1f, 0.39f));
 			}
 			else if (_player.Folded || _player.IsOutOfPlay)
 			{
-				_name.color = Color.red;
+				_playerNameAnimation.SetState(Color.red);
 				if (IsMe == false)
 				{
 					_card1.Hide();
 					_card2.Hide();
 				}
+
+				if (_player.Folded)
+				{
+					_foldOut.Show();
+				}
 			}
 			else
 			{
-				_name.color = Color.white;
+				_playerNameAnimation.SetState(Color.white);
+				_foldOut.Hide();
 			}
 		}
 	}
