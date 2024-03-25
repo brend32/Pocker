@@ -1,5 +1,6 @@
 using AurumGames.CompositeRoot;
 using AurumGames.SceneManagement;
+using Poker.Gameplay.Core;
 using Poker.Gameplay.Core.States;
 using Poker.Gameplay.Views;
 using UnityEngine;
@@ -7,9 +8,11 @@ using UnityEngine;
 namespace Poker.Screens
 {
     [SceneInitScript("Game")]
-    public class GameScreen : PageScript
+    public partial class GameScreen : PageScript
     {
         [SerializeField] private PlayersView _players;
+
+        [Dependency] private GameManager _gameManager;
         
         protected override void BeforeInit()
         {
@@ -30,6 +33,15 @@ namespace Poker.Screens
         public void RestartGame(GameState gameState)
         {
             
+        }
+
+        public void EndGame()
+        {
+            _gameManager.EndGame();
+            PageSystem.Load<MenuScreen>(menu =>
+            {
+                Unload();
+            });
         }
     }
 }
