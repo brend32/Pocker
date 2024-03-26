@@ -149,7 +149,6 @@ namespace Poker.Screens
                 StartingCash = _startingCash.Value,
                 Difficulty = GetDifficulty()
             });
-            HidePage();
         }
 
         private Difficulty GetDifficulty()

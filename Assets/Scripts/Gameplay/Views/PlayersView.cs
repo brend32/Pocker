@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using AurumGames.CompositeRoot;
 using Cysharp.Threading.Tasks;
 using Poker.Gameplay.Core;
@@ -59,8 +60,11 @@ namespace Poker.Gameplay.Views
 			}
 		}
 
-		public async UniTask RevealOthersCardsRoundEndAnimation()
+		public async UniTask RevealOthersCardsRoundEndAnimation(CancellationToken cancellationToken)
 		{
+			if (_gameManager.IsPlaying == false)
+				return;
+			
 			for (var i = 0; i < _otherPlayersCount; i++)
 			{
 				PlayerView playerView = _others[i];
@@ -68,17 +72,23 @@ namespace Poker.Gameplay.Views
 				if (state.Folded || state.IsOutOfPlay)
 					continue;
 
-				await playerView.RevealCardsRoundEndAnimation();
-				await _gameManager.DelayAsync(500);
+				await playerView.RevealCardsRoundEndAnimation(cancellationToken);
+				await _gameManager.DelayAsync(500, cancellationToken);
 			}
 		}
 		
-		public async UniTask DealCardsAnimation()
+		public async UniTask DealCardsAnimation(CancellationToken cancellationToken)
 		{
+			if (_gameManager.IsPlaying == false)
+				return;
+			
 			await Deal(_me);
 				
 			for (var i = 0; i < _otherPlayersCount; i++)
 			{
+				if (_gameManager.IsPlaying == false)
+					return;
+				
 				await Deal(_others[i]);
 			}
 			
@@ -90,12 +100,15 @@ namespace Poker.Gameplay.Views
 				if (state.Folded || state.IsOutOfPlay)
 					return UniTask.CompletedTask;
 				
-				return playerView.DealCardsAnimation().ContinueWith(() => _gameManager.DelayAsync(50));
+				return playerView.DealCardsAnimation(cancellationToken).ContinueWith(() => _gameManager.DelayAsync(50, cancellationToken));
 			}
 		}
 		
-		public async UniTask HideCardsRoundEndAnimation()
+		public async UniTask HideCardsRoundEndAnimation(CancellationToken cancellationToken)
 		{
+			if (_gameManager.IsPlaying == false)
+				return;
+			
 			List<UniTask> tasks = new();
 			
 			Add(_me);
@@ -110,17 +123,23 @@ namespace Poker.Gameplay.Views
 
 			void Add(PlayerView playerView)
 			{
+				if (_gameManager.IsPlaying == false)
+					return;
+				
 				PlayerState state = playerView.PlayerState;
 				if (state.Folded || state.IsOutOfPlay)
 					return;
 				
-				tasks.Add(playerView.HideCardsRoundEndAnimation());
+				tasks.Add(playerView.HideCardsRoundEndAnimation(cancellationToken));
 			}
 		}
 
-		public async UniTask MakeChoiceAnimation(PlayerState player, VotingResponse response)
+		public async UniTask MakeChoiceAnimation(PlayerState player, VotingResponse response, CancellationToken cancellationToken)
 		{
-			await _map[player].MakeChoiceAnimation(response);
+			if (_gameManager.IsPlaying == false)
+				return;
+			
+			await _map[player].MakeChoiceAnimation(response, cancellationToken);
 		}
 	}
 }

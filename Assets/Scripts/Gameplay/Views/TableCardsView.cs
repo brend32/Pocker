@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using AurumGames.Animation;
 using AurumGames.Animation.Tracks;
 using AurumGames.CompositeRoot;
@@ -27,30 +28,39 @@ namespace Poker.Gameplay.Views
 			
 		}
 
-		public async UniTask HideCardsRoundEndAnimation()
+		public async UniTask HideCardsRoundEndAnimation(CancellationToken cancellationToken)
 		{
-			var tasks = _cardViews.Select(cardView => cardView.HideAnimation());
+			if (_gameManager.IsPlaying == false)
+				return;
+			
+			var tasks = _cardViews.Select(cardView => cardView.HideAnimation(cancellationToken));
 
 			await UniTask.WhenAll(tasks);
 		}
 		
-		public async UniTask DealCardsAnimation()
+		public async UniTask DealCardsAnimation(CancellationToken cancellationToken)
 		{
+			if (_gameManager.IsPlaying == false)
+				return;
+			
 			HideCards();
 			List<UniTask> tasks = new();
 
 			var delay = 0;
 			foreach (CardView cardView in _cardViews)
 			{
-				tasks.Add(_gameManager.DelayAsync(delay).ContinueWith(cardView.ShowAnimation));
+				tasks.Add(_gameManager.DelayAsync(delay, cancellationToken).ContinueWith(() => cardView.ShowAnimation(cancellationToken)));
 				delay += 150;
 			}
 			
 			await UniTask.WhenAll(tasks);
 		}
 
-		public async UniTask RevealCardAnimation()
+		public async UniTask RevealCardAnimation(CancellationToken cancellationToken)
 		{
+			if (_gameManager.IsPlaying == false)
+				return;
+			
 			List<UniTask> tasks = new();
 
 			var delay = 0;
@@ -60,7 +70,7 @@ namespace Poker.Gameplay.Views
 				if (cardView.Revealed)
 					continue;
 
-				tasks.Add(_gameManager.DelayAsync(delay).ContinueWith(cardView.RevealAnimation));
+				tasks.Add(_gameManager.DelayAsync(delay, cancellationToken).ContinueWith(() => cardView.RevealAnimation(cancellationToken)));
 				delay += 100;
 			}
 			
@@ -70,6 +80,9 @@ namespace Poker.Gameplay.Views
 		[EasyButtons.Button]
 		public void HideCards()
 		{
+			if (_gameManager.IsPlaying == false)
+				return;
+			
 			for (var i = 0; i < _cardViews.Length; i++)
 			{
 				CardView cardView = _cardViews[i];

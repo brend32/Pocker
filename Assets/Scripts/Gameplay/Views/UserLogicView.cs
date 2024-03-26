@@ -48,6 +48,9 @@ namespace Poker.Gameplay.Views
 
 		private void UpdateView()
 		{
+			if (_gameManager.IsPlaying == false)
+				return;
+			
 			var isOurTurn = _player == Table.Voter && _answered == false;
 
 			_canvasGroup.blocksRaycasts = isOurTurn;

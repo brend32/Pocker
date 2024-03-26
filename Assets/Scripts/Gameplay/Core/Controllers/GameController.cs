@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 using Cysharp.Threading.Tasks;
 using Poker.Gameplay.Core.Controllers;
 using Poker.Gameplay.Core.States;
@@ -22,15 +23,15 @@ namespace Poker.Gameplay.Core
 			Round = new RoundController(gameManager, state, Animation);
 		}
 
-		public async UniTaskVoid StartGame()
+		public async UniTaskVoid StartGame(CancellationToken cancellationToken)
 		{
 			_state.StartGame();
-			await _gameManager.DelayAsync(1000);
+			await _gameManager.DelayAsync(1000, cancellationToken);
 			while (IsPlaying())
 			{
-				await Round.StartRound();
+				await Round.StartRound(cancellationToken);
 			}
-			await _gameManager.DelayAsync(1000);
+			await _gameManager.DelayAsync(1000, cancellationToken);
 			EndGame();
 		}
 

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading;
 using AurumGames.Animation;
 using AurumGames.Animation.Tracks;
 using AurumGames.CompositeRoot;
@@ -106,29 +107,38 @@ namespace Poker.Gameplay.Views
 			_revealPlayer.TimeSource = _gameManager.TimeSource;
 		}
 
-		public async UniTask RevealAnimation()
+		public async UniTask RevealAnimation(CancellationToken cancellationToken)
 		{
+			if (_gameManager.IsPlaying == false)
+				return;
+			
 			_revealPlayer.PlayFromStart();
 
-			await UniTask.WaitWhile(() => _revealPlayer.IsPlaying);
+			await UniTask.WaitWhile(() => _revealPlayer.IsPlaying, cancellationToken: cancellationToken);
 		}
 
-		public async UniTask ShowAnimation()
+		public async UniTask ShowAnimation(CancellationToken cancellationToken)
 		{
+			if (_gameManager.IsPlaying == false)
+				return;
+			
 			if (_visibilityPlayer.CurrentState == Visibility.Visible)
 				return;
 			
 			_visibilityPlayer.SetState(Visibility.Visible);
-			await UniTask.WaitWhile(() => _visibilityPlayer.IsPlaying);
+			await UniTask.WaitWhile(() => _visibilityPlayer.IsPlaying, cancellationToken: cancellationToken);
 		}
 		
-		public async UniTask HideAnimation()
+		public async UniTask HideAnimation(CancellationToken cancellationToken)
 		{
+			if (_gameManager.IsPlaying == false)
+				return;
+			
 			if (_visibilityPlayer.CurrentState == Visibility.Hidden)
 				return;
 			
 			_visibilityPlayer.SetState(Visibility.Hidden);
-			await UniTask.WaitWhile(() => _visibilityPlayer.IsPlaying);
+			await UniTask.WaitWhile(() => _visibilityPlayer.IsPlaying, cancellationToken: cancellationToken);
 		}
 
 		public void Bind(CardModel model)

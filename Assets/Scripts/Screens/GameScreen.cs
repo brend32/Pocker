@@ -30,23 +30,15 @@ namespace Poker.Screens
             _players.Bind();
         }
 
-        public void RestartGame(GameState gameState)
-        {
-            
-        }
-
         public void ExitToMenu()
         {
             _gameManager.EndGame();
-            PageSystem.Load<MenuScreen>(menu =>
-            {
-                Unload();
-            });
+            PageSystem.LoadWithLoading<LoadingScreen, MenuScreen>();
         }
 
         public void PlayAgain()
         {
-            
+            _gameManager.StartGame(_gameManager.Settings);
         }
     }
 }

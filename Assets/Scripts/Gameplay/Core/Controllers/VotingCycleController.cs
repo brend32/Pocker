@@ -31,8 +31,11 @@ namespace Poker.Gameplay.Core.Controllers
 			_table = state.Table;
 		}
 
-		public async UniTask StartVotingCycle()
+		public async UniTask StartVotingCycle(CancellationToken cancellationToken)
 		{
+			if (_gameManager.IsPlaying == false)
+				return;
+			
 			if (_table.CanSkipVote())
 				return;
 			
@@ -40,6 +43,9 @@ namespace Poker.Gameplay.Core.Controllers
 			int i = 0;
 			do
 			{
+				if (_gameManager.IsPlaying == false)
+					return;
+				
 				if (_table.Voter.CanVote())
 				{
 					VotingResponse response = VotingResponse.Fold();
@@ -48,14 +54,14 @@ namespace Poker.Gameplay.Core.Controllers
 						response = VotingResponse.Raise(10);
 						MakeVoteAction(response);
 
-						await _animationController.MakeChoice(_table.Voter, response);
+						await _animationController.MakeChoice(_table.Voter, response, cancellationToken);
 					}
 					else
 					{
 						if (i == 2 && _table.CardsRevealed == 0)
 							_table.ResetVotingCycle();
 						
-						using var tokenSource = new CancellationTokenSource();
+						using var tokenSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
 
 						var votingContext = new VotingContext();
 						var thinkingTask = _table.Voter.Logic.MakeVotingAction(votingContext, tokenSource.Token).Preserve();
@@ -63,6 +69,8 @@ namespace Poker.Gameplay.Core.Controllers
 							_gameManager.DelayAsync(40000, cancellationToken: tokenSource.Token),
 							thinkingTask);
 
+						if (_gameManager.IsPlaying == false)
+							return;
 						
 						if (result == 1)
 						{
@@ -74,7 +82,7 @@ namespace Poker.Gameplay.Core.Controllers
 						}
 						MakeVoteAction(response);
 
-						await _animationController.MakeChoice(_table.Voter, response);
+						await _animationController.MakeChoice(_table.Voter, response, cancellationToken);
 					}
 				}
 

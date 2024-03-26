@@ -41,6 +41,7 @@ namespace Poker.Gameplay.Core
         private readonly PageSystem _pageSystem;
 
         private GameScreen _gameScreen;
+        private CancellationTokenSource _tokenSource;
         private float _timeScale = 1;
         
         private class WaitGameTime : CustomYieldInstruction
@@ -173,18 +174,18 @@ namespace Poker.Gameplay.Core
                     return false;
                 }
 
+                if (_gameManager == null || _gameManager.IsPlaying == false)
+                {
+                    _core.TrySetResult(null);
+                    return false;
+                }
+                
                 if (_elapsed == 0.0f)
                 {
                     if (_initialFrame == Time.frameCount)
                     {
                         return true;
                     }
-                }
-
-                if (_gameManager == null || _gameManager.IsPlaying == false)
-                {
-                    _core.TrySetResult(null);
-                    return false;
                 }
 
                 _elapsed += _gameManager.DeltaTime;
@@ -221,24 +222,16 @@ namespace Poker.Gameplay.Core
         {
             IsPlaying = true;
 
+            _tokenSource = new CancellationTokenSource();
             SetupGame(gameSettings);
             
-            if (_gameScreen == null)
+            _pageSystem.LoadWithLoading<LoadingScreen, GameScreen>(gamePage =>
             {
-                _pageSystem.Load<GameScreen>(gamePage =>
-                {
-                    _gameScreen = gamePage;
-                    gamePage.StartGame(State);
-                    GameStarted?.Invoke();
-                    Controller.StartGame().Forget();
-                });
-            }
-            else
-            {
-                _gameScreen.RestartGame(State);
+                _gameScreen = gamePage;
+                gamePage.StartGame(State);
                 GameStarted?.Invoke();
-                Controller.StartGame().Forget();
-            }
+                Controller.StartGame(_tokenSource.Token).Forget();
+            });
         }
 
         private void SetupGame(GameSettings gameSettings)
@@ -273,6 +266,9 @@ namespace Poker.Gameplay.Core
 
             State = null;
             Statistics = null;
+            _tokenSource.Cancel();
+            _tokenSource.Dispose();
+            _tokenSource = null;
             try
             {
                 GameEnded?.Invoke(win);

@@ -1,4 +1,5 @@
 ﻿using System.Linq;
+using System.Threading;
 using AurumGames.Animation;
 using AurumGames.Animation.Tracks;
 using AurumGames.CompositeRoot;
@@ -26,7 +27,7 @@ namespace Poker.Gameplay.Views
 		
 		[Dependency] private GameManager _gameManager;
 
-		private bool IsMe => _gameManager.State.Me == _player;
+		private bool IsMe => _gameManager.State?.Me == _player;
 		private TableState TableState => _gameManager.State.Table;
 		
 		private PlayerState _player;
@@ -97,44 +98,59 @@ namespace Poker.Gameplay.Views
 			gameObject.SetActive(false);
 		}
 
-		public async UniTask MakeChoiceAnimation(VotingResponse response)
+		public async UniTask MakeChoiceAnimation(VotingResponse response, CancellationToken cancellationToken)
 		{
+			if (_gameManager.IsPlaying == false)
+				return;
+			
 			_votingResponse = response;
 			DataChanged();
-			await _gameManager.DelayAsync(500);
+			await _gameManager.DelayAsync(500, cancellationToken: cancellationToken);
 		}
 
-		public async UniTask RevealCardsRoundEndAnimation()
+		public async UniTask RevealCardsRoundEndAnimation(CancellationToken cancellationToken)
 		{
+			if (_gameManager.IsPlaying == false)
+				return;
+			
 			_revealCards = true;
 			DataChanged();
 			await UniTask.WhenAll(
-				_gameManager.DelayAsync(100).ContinueWith(_card1.RevealAnimation),
-				_card2.RevealAnimation()
+				_gameManager.DelayAsync(100, cancellationToken: cancellationToken).ContinueWith(() => _card1.RevealAnimation(cancellationToken)),
+				_card2.RevealAnimation(cancellationToken)
 			);
 		}
 		
-		public async UniTask HideCardsRoundEndAnimation()
+		public async UniTask HideCardsRoundEndAnimation(CancellationToken cancellationToken)
 		{
+			if (_gameManager.IsPlaying == false)
+				return;
+			
 			_votingResponse = null;
 			DataChanged();
 			await UniTask.WhenAll(
-				_card1.HideAnimation(),
-				_card2.HideAnimation()
+				_card1.HideAnimation(cancellationToken),
+				_card2.HideAnimation(cancellationToken)
 			);
 		}
 
-		public async UniTask DealCardsAnimation()
+		public async UniTask DealCardsAnimation(CancellationToken cancellationToken)
 		{
+			if (_gameManager.IsPlaying == false)
+				return;
+			
 			DataChanged();
 			await UniTask.WhenAll(
-				_card1.ShowAnimation(),
-				_card2.ShowAnimation()
+				_card1.ShowAnimation(cancellationToken),
+				_card2.ShowAnimation(cancellationToken)
 			);
 		}
 
 		private void DataChanged()
 		{
+			if (_gameManager.IsPlaying == false)
+				return;
+			
 			var shouldShow = IsMe || _revealCards;
 
 			if (_votingResponse.HasValue)

@@ -1,4 +1,5 @@
-﻿using AurumGames.CompositeRoot;
+﻿using System.Threading;
+using AurumGames.CompositeRoot;
 using Cysharp.Threading.Tasks;
 using Poker.Gameplay.Core;
 using Poker.Gameplay.Core.Controllers;
@@ -25,29 +26,44 @@ namespace Poker.Gameplay.Views
 			_gameManager.Controller.Animation.Register(this);
 		}
 
-		public UniTask DealCards()
+		public UniTask DealCards(CancellationToken cancellationToken)
 		{
-			return _playersView.DealCardsAnimation().ContinueWith(_tableCardsView.DealCardsAnimation);
+			if (_gameManager.IsPlaying == false)
+				return UniTask.CompletedTask;
+			
+			return _playersView.DealCardsAnimation(cancellationToken).ContinueWith(() => _tableCardsView.DealCardsAnimation(cancellationToken));
 		}
 
-		public UniTask RevealCard()
+		public UniTask RevealCard(CancellationToken cancellationToken)
 		{
-			return _tableCardsView.RevealCardAnimation();
+			if (_gameManager.IsPlaying == false)
+				return UniTask.CompletedTask;
+			
+			return _tableCardsView.RevealCardAnimation(cancellationToken);
 		}
 
-		public UniTask RevealCardsRoundEnd()
+		public UniTask RevealCardsRoundEnd(CancellationToken cancellationToken)
 		{
-			return _playersView.RevealOthersCardsRoundEndAnimation();
+			if (_gameManager.IsPlaying == false)
+				return UniTask.CompletedTask;
+			
+			return _playersView.RevealOthersCardsRoundEndAnimation(cancellationToken);
 		}
 
-		public UniTask MakeChoice(PlayerState player, VotingResponse response)
+		public UniTask MakeChoice(PlayerState player, VotingResponse response, CancellationToken cancellationToken)
 		{
-			return _playersView.MakeChoiceAnimation(player, response);
+			if (_gameManager.IsPlaying == false)
+				return UniTask.CompletedTask;
+			
+			return _playersView.MakeChoiceAnimation(player, response, cancellationToken);
 		}
 
-		public UniTask RoundEnd()
+		public UniTask RoundEnd(CancellationToken cancellationToken)
 		{
-			return UniTask.WhenAll(_tableCardsView.HideCardsRoundEndAnimation(), _playersView.HideCardsRoundEndAnimation());
+			if (_gameManager.IsPlaying == false)
+				return UniTask.CompletedTask;
+			
+			return UniTask.WhenAll(_tableCardsView.HideCardsRoundEndAnimation(cancellationToken), _playersView.HideCardsRoundEndAnimation(cancellationToken));
 		}
 	}
 }

@@ -1,4 +1,5 @@
-﻿using Cysharp.Threading.Tasks;
+﻿using System.Threading;
+using Cysharp.Threading.Tasks;
 using Poker.Gameplay.Core.Models;
 using Poker.Gameplay.Core.States;
 
@@ -13,38 +14,38 @@ namespace Poker.Gameplay.Core.Controllers
 			_presenter = presenter;
 		}
 		
-		public UniTask DealCards()
+		public UniTask DealCards(CancellationToken cancellationToken)
 		{
-			return _presenter?.DealCards() ?? UniTask.CompletedTask;
+			return _presenter?.DealCards(cancellationToken) ?? UniTask.CompletedTask;
 		}
 
-		public UniTask RevealCard()
+		public UniTask RevealCard(CancellationToken cancellationToken)
 		{
-			return _presenter?.RevealCard() ?? UniTask.CompletedTask;
+			return _presenter?.RevealCard(cancellationToken) ?? UniTask.CompletedTask;
 		}
 
-		public UniTask MakeChoice(PlayerState player, VotingResponse response)
+		public UniTask MakeChoice(PlayerState player, VotingResponse response, CancellationToken cancellationToken)
 		{
-			return _presenter?.MakeChoice(player, response) ?? UniTask.CompletedTask;
+			return _presenter?.MakeChoice(player, response, cancellationToken) ?? UniTask.CompletedTask;
 		}
 		
-		public UniTask RevealCardsRoundEnd()
+		public UniTask RevealCardsRoundEnd(CancellationToken cancellationToken)
 		{
-			return _presenter?.RevealCardsRoundEnd() ?? UniTask.CompletedTask;
+			return _presenter?.RevealCardsRoundEnd(cancellationToken) ?? UniTask.CompletedTask;
 		}
 		
-		public UniTask RoundEnd()
+		public UniTask RoundEnd(CancellationToken cancellationToken)
 		{
-			return _presenter?.RoundEnd() ?? UniTask.CompletedTask;
+			return _presenter?.RoundEnd(cancellationToken) ?? UniTask.CompletedTask;
 		}
 	}
 
 	public interface IAnimationPresenter
 	{
-		UniTask DealCards();
-		UniTask RevealCard();
-		UniTask MakeChoice(PlayerState player, VotingResponse response);
-		UniTask RevealCardsRoundEnd();
-		UniTask RoundEnd();
+		UniTask DealCards(CancellationToken cancellationToken);
+		UniTask RevealCard(CancellationToken cancellationToken);
+		UniTask MakeChoice(PlayerState player, VotingResponse response, CancellationToken cancellationToken);
+		UniTask RevealCardsRoundEnd(CancellationToken cancellationToken);
+		UniTask RoundEnd(CancellationToken cancellationToken);
 	}
 }

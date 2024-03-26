@@ -60,22 +60,36 @@ namespace AurumGames.SceneManagement
         
         private bool _pageActive;
         private bool _pageBlocked;
+        private bool _hidden;
 
         /// <summary>
         /// Unload scene
         /// </summary>
         protected void Unload()
         {
+            if (_hidden == false)
+                throw new Exception("Can`t unload when page is not released. Call HidePage first");
+            
+            BeforeUnload();
             SceneManager.UnloadSceneAsync(gameObject.scene);
+        }
+        
+        internal void FastHidePage()
+        {
+            _hidden = true;
+            Hide?.Invoke();
+            BeginHide(true);
+            Unload();
         }
 
         /// <summary>
         /// Close page
         /// </summary>
-        protected void HidePage()
+        protected internal void HidePage()
         {
+            _hidden = true;
             Hide?.Invoke();
-            BeginHide();
+            BeginHide(false);
 
             if (_hidePlayer == null)
             {
@@ -101,7 +115,7 @@ namespace AurumGames.SceneManagement
         /// </summary>
         /// <param name="canvasGroup">Root canvasGroup</param>
         /// <param name="transform">Root transform</param>
-        protected void SetupDefaultAnimations(CanvasGroup canvasGroup, Transform transform)
+        protected virtual void SetupDefaultAnimations(CanvasGroup canvasGroup, Transform transform)
         {
             (TracksEvaluator show, TracksEvaluator hide) = DefaultAnimations.ScaleFadeAnimation(canvasGroup, transform);
             new AnimationPlayer(this, show).Play();
@@ -124,7 +138,12 @@ namespace AurumGames.SceneManagement
         /// <summary>
         /// Page hides
         /// </summary>
-        protected virtual void BeginHide() {}
+        /// <param name="fastHide">Is fast hidding</param>
+        protected virtual void BeginHide(bool fastHide) {}
+        /// <summary>
+        /// Before unload
+        /// </summary>
+        protected virtual void BeforeUnload() {}
         /// <summary>
         /// Blocked state changed
         /// </summary>

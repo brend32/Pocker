@@ -95,6 +95,56 @@ namespace AurumGames.SceneManagement
         /// Load page
         /// </summary>
         /// <param name="loaded">Loaded callback</param>
+        /// <typeparam name="TLoading">Loading page type</typeparam>
+        /// <typeparam name="T">Page type</typeparam>
+        public void LoadWithLoading<TLoading, T>(Action<T> loaded = null) 
+            where T : PageScript
+            where TLoading : LoadingPage
+        {
+            if (Active != null)
+            {
+                Active.IsActive = false;
+                Active = null;
+            }
+            
+            SceneLoader.Load<TLoading>(_defaultMono, (loadingPage) =>
+            {
+                void Hide()
+                {
+                    Remove(loadingPage);
+                    loadingPage.Hide -= Hide;
+                }
+
+                void FullyVisible()
+                {
+                    foreach (PageScript script in _loaded.ToArray())
+                    {
+                        if (script == loadingPage)
+                            continue;
+
+                        script.FastHidePage();
+                    }
+
+                    Load<T>(page =>
+                    {
+                        loadingPage.FullyVisible -= FullyVisible;
+                        loadingPage.HidePage();
+                        loadingPage.DestroyCamera();
+                        loaded?.Invoke(page);
+                    });
+                }
+
+                loadingPage.Hide += Hide;
+                loadingPage.FullyVisible += FullyVisible;
+                loadingPage.PassSystem(this);
+                Push(loadingPage);
+            });
+        }
+        
+        /// <summary>
+        /// Load page
+        /// </summary>
+        /// <param name="loaded">Loaded callback</param>
         /// <param name="operationCallback">Callback to get access to loading process</param>
         /// <typeparam name="T">Page type</typeparam>
         public void Load<T>(Action<T> loaded = null, Action<AsyncOperation> operationCallback = null) where T : PageScript

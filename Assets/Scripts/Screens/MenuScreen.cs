@@ -11,13 +11,11 @@ using UnityEngine.UI;
 namespace Poker.Screens
 {
     [SceneInitScript("Menu")]
-    public partial class MenuScreen : PageScript
+    public class MenuScreen : PageScript
     {
         [SerializeField] private MenuCardButton[] _buttons;
         [SerializeField] private CanvasGroup _title;
         [SerializeField] private GraphicRaycaster _graphicRaycaster;
-        
-        [Dependency] private GameManager _gameManager;
 
         private StatedAnimationPlayer<Visibility> _animation;
         
@@ -28,8 +26,6 @@ namespace Poker.Screens
             
             Context.Global.Resolve(this);
             CustomInitializer.StartInitialization(gameObject.scene);
-            
-            _gameManager.GameStarted += GameStarted;
         }
 
         private void SetupAnimation()
@@ -110,12 +106,6 @@ namespace Poker.Screens
         public void PlayAnimation()
         {
             _animation.SetState(Visibility.Visible);
-        }
-
-        private void GameStarted()
-        {
-            _gameManager.GameStarted -= GameStarted;
-            HidePage();
         }
 
         public void OpenDifficultyChooseScreen()

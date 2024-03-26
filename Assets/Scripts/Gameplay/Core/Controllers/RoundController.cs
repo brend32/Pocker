@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 using System.Threading.Tasks;
 using AurumGames.CompositeRoot;
 using Cysharp.Threading.Tasks;
@@ -48,40 +49,46 @@ namespace Poker.Gameplay.Core
 			Voting = new VotingCycleController(gameManager, state, animationController);
 		}
 		
-		public async UniTask StartRound()
+		public async UniTask StartRound(CancellationToken cancellationToken)
 		{
+			if (_gameManager.IsPlaying == false)
+				return;
+			
 			Debug.Log("Started round " + _state.Round);
 			_state.StartNewRound();
 			_roundStarted.Invoke();
-			await _animationController.DealCards();
+			await _animationController.DealCards(cancellationToken);
 			while (_table.IsAllCardsRevealed() == false)
 			{
-				await StartVotingCycle();
+				if (_gameManager.IsPlaying == false)
+					return;
+				
+				await StartVotingCycle(cancellationToken);
 				_table.RevealNextCard();
-				await _animationController.RevealCard();
+				await _animationController.RevealCard(cancellationToken);
 			}
 
 			Debug.Log("Reveal cards");
 			_revealCards.Invoke();
-			await _animationController.RevealCardsRoundEnd();
+			await _animationController.RevealCardsRoundEnd(cancellationToken);
 			_table.DecideWinner();
 			Debug.Log("Decide winner");
-			await _gameManager.DelayAsync(5000);
+			await _gameManager.DelayAsync(5000, cancellationToken);
 			
-			await EndRound();
+			await EndRound(cancellationToken);
 		}
 
-		public async UniTask StartVotingCycle()
+		public async UniTask StartVotingCycle(CancellationToken cancellationToken)
 		{
 			Debug.Log("Started new voting cycle");
-			await Voting.StartVotingCycle();
+			await Voting.StartVotingCycle(cancellationToken);
 		}
 
-		public async UniTask EndRound()
+		public async UniTask EndRound(CancellationToken cancellationToken)
 		{
 			_table.EndRound();
 			_roundEnded.Invoke();
-			await _animationController.RoundEnd();
+			await _animationController.RoundEnd(cancellationToken);
 			Debug.Log("Round ended");
 		}
 	}

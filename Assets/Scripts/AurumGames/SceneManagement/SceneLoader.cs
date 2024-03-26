@@ -19,6 +19,9 @@ namespace AurumGames.SceneManagement
         public static void Load<T>(Type type, MonoBehaviour mono, Action<T> loaded, Action<AsyncOperation> operationCallback = null) where T : SceneInitScript
         {
             SceneInitScriptAttribute attribute = GetCustomAttribute(type);
+            if (attribute == null)
+                throw new Exception($"Missed {nameof(SceneInitScriptAttribute)}");
+            
             if (Waiting.ContainsKey(attribute.SceneName))
             {
                 Waiting[attribute.SceneName] += (script) =>
