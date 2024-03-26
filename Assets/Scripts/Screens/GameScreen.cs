@@ -35,13 +35,18 @@ namespace Poker.Screens
             
         }
 
-        public void EndGame()
+        public void ExitToMenu()
         {
             _gameManager.EndGame();
             PageSystem.Load<MenuScreen>(menu =>
             {
                 Unload();
             });
+        }
+
+        public void PlayAgain()
+        {
+            
         }
     }
 }

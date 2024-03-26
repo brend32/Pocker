@@ -36,7 +36,7 @@ namespace Poker.Gameplay.Views
 		
 		public async UniTask DealCardsAnimation()
 		{
-			UpdateView();
+			HideCards();
 			List<UniTask> tasks = new();
 
 			var delay = 0;
@@ -68,13 +68,13 @@ namespace Poker.Gameplay.Views
 		}
 
 		[EasyButtons.Button]
-		public void UpdateView()
+		public void HideCards()
 		{
 			for (var i = 0; i < _cardViews.Length; i++)
 			{
 				CardView cardView = _cardViews[i];
 				cardView.Bind(TableState.Cards[i]);
-				cardView.Revealed = i < TableState.CardsRevealed;
+				cardView.Revealed = false;
 			}
 		}
 	}

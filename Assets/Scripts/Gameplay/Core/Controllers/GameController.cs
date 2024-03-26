@@ -29,19 +29,26 @@ namespace Poker.Gameplay.Core
 			while (IsPlaying())
 			{
 				await Round.StartRound();
-				
 			}
-			await EndGame();
+			await _gameManager.DelayAsync(1000);
+			EndGame();
 		}
 
 		private bool IsPlaying()
 		{
-			return _state.Round < 10;
+			return _state.Me.IsOutOfPlay == false && _state.Table.PlayersInGame.Count > 1;
 		}
 
-		public async UniTask EndGame()
+		public void EndGame()
 		{
-			Debug.Log("Game ended");
+			if (_state.Me.IsOutOfPlay == false)
+			{
+				_gameManager.EndGame(true);
+			}
+			else
+			{
+				_gameManager.EndGame();
+			}
 		}
 	}
 }

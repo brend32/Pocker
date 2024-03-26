@@ -60,6 +60,13 @@ namespace Poker.Gameplay.Views
 					new KeyFrame<Vector3>(0, new Vector3(position.x, 0, position.z), Easing.QuintOut),
 					new KeyFrame<Vector3>(350, new Vector3(position.x, 2, position.z), Easing.QuintIn),
 					new KeyFrame<Vector3>(700, new Vector3(position.x, 0, position.z), Easing.QuintIn),
+				}),
+				new TriggerTrack(new []
+				{
+					new TriggerKeyFrame(50, () =>
+					{
+						Revealed = true;
+					})
 				})
 			});
 
@@ -101,9 +108,7 @@ namespace Poker.Gameplay.Views
 
 		public async UniTask RevealAnimation()
 		{
-			_revealPlayer.JumpStart();
-			_revealPlayer.Play();
-			Revealed = true;
+			_revealPlayer.PlayFromStart();
 
 			await UniTask.WaitWhile(() => _revealPlayer.IsPlaying);
 		}

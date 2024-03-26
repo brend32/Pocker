@@ -15,7 +15,7 @@ namespace Poker.Gameplay.Core
 	public partial class GameManager
     {
         public event Action GameStarted;
-        public event Action GameEnded;
+        public event Action<bool> GameEnded;
         public event Action TimeScaleChanged;
 
         public ITimeSource TimeSource { get; }
@@ -264,16 +264,18 @@ namespace Poker.Gameplay.Core
             }
         }
 
-        public void EndGame()
+        public void EndGame(bool win = false)
         {
+            if (IsPlaying == false)
+                return;
+            
             IsPlaying = false;
 
             State = null;
             Statistics = null;
-            Settings = null;
             try
             {
-                GameEnded?.Invoke();
+                GameEnded?.Invoke(win);
             }
             catch (Exception e)
             {

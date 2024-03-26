@@ -107,6 +107,11 @@ namespace Poker.Screens
             _animation.SetState(Visibility.Hidden);
         }
 
+        public void PlayAnimation()
+        {
+            _animation.SetState(Visibility.Visible);
+        }
+
         private void GameStarted()
         {
             _gameManager.GameStarted -= GameStarted;

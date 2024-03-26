@@ -160,7 +160,9 @@ namespace Poker.Gameplay.Core.States
 			if (bet == 0)
 				return;
 			
-			VotingContext.MinimumBet += bet;
+			if (Voter.Bet > VotingContext.MinimumBet)
+				VotingContext.MinimumBet = Voter.Bet;
+			
 			Pot += bet;
 			ResetVotingCycle();
 		}

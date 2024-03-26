@@ -33,7 +33,7 @@ namespace Poker.Gameplay.Core
 
 		private void Update()
 		{
-			if (_gameManager == null || IsInit == false)
+			if (_gameManager == null || IsInit == false || _gameManager.IsPlaying == false)
 				return;
 
 			_gameManager.DeltaTime = Time.deltaTime * _gameManager.TimeScale;

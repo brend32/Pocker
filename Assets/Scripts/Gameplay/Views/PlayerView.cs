@@ -86,6 +86,9 @@ namespace Poker.Gameplay.Views
 			_player.DataChanged += DataChanged;
 			gameObject.SetActive(true);
 			
+			_card1.Revealed = IsMe;
+			_card2.Revealed = IsMe;
+			
 			DataChanged();
 		}
 
@@ -133,8 +136,6 @@ namespace Poker.Gameplay.Views
 		private void DataChanged()
 		{
 			var shouldShow = IsMe || _revealCards;
-			_card1.Revealed = shouldShow;
-			_card2.Revealed = shouldShow;
 
 			if (_votingResponse.HasValue)
 			{

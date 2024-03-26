@@ -95,7 +95,10 @@ namespace Poker.UI.Game
 
 		public void Exit()
 		{
-			_gameScreen.EndGame();
+			SafeClick(() =>
+			{
+				_gameScreen.ExitToMenu();
+			});
 		}
 	}
 }
