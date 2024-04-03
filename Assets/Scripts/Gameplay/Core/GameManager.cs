@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading;
+using System.Threading.Tasks;
 using AurumGames.Animation;
 using AurumGames.CompositeRoot;
 using AurumGames.SceneManagement;
 using Cysharp.Threading.Tasks;
+using Poker.Gameplay.Core.BotLogic;
 using Poker.Gameplay.Core.States;
 using Poker.Gameplay.Core.Statistics;
 using Poker.Screens;
@@ -15,9 +17,10 @@ namespace Poker.Gameplay.Core
 	public partial class GameManager
     {
         public event Action GameStarted;
-        public event Action<bool> GameEnded;
+        public event Action<PlayerState> GameEnded;
         public event Action TimeScaleChanged;
 
+        public bool BotsGame { get; private set; }
         public ITimeSource TimeSource { get; }
         public bool IsPlaying { get; private set; }
         public bool IsPaused { get; private set; }
@@ -120,7 +123,7 @@ namespace Poker.Gameplay.Core
                 result._elapsed = 0.0f;
                 result._delayTimeSpan = seconds;
                 result._cancellationToken = cancellationToken;
-                result._initialFrame = PlayerLoopHelper.IsMainThread ? Time.frameCount : -1;
+                result._initialFrame = PlayerLoopHelper.IsMainThread ? Environment.TickCount : -1;
 
                 if (cancelImmediately && cancellationToken.CanBeCanceled)
                 {
@@ -182,7 +185,7 @@ namespace Poker.Gameplay.Core
                 
                 if (_elapsed == 0.0f)
                 {
-                    if (_initialFrame == Time.frameCount)
+                    if (_initialFrame == Environment.TickCount)
                     {
                         return true;
                     }
@@ -221,61 +224,93 @@ namespace Poker.Gameplay.Core
         public void StartGame(GameSettings gameSettings, Action loadingScreenFullyVisible = null)
         {
             IsPlaying = true;
+            BotsGame = false;
 
             _tokenSource = new CancellationTokenSource();
             SetupGame(gameSettings);
+            CreateNewStates(gameSettings);
             
             _pageSystem.LoadWithLoading<LoadingScreen, GameScreen>(gamePage =>
             {
                 _gameScreen = gamePage;
                 gamePage.StartGame(State);
                 GameStarted?.Invoke();
-                Controller.StartGame(_tokenSource.Token).Forget();
+                Controller.StartGame(_tokenSource.Token);
             });
+        }
+        
+        public Task StartBotGame(GameSettings gameSettings, BotState[] bots)
+        {
+            lock (this)
+            {
+                IsPlaying = true;
+                BotsGame = true;
+                DeltaTime = 1;
+
+                _tokenSource = new CancellationTokenSource();
+                SetupGame(gameSettings);
+                CreateNewStates(gameSettings, bots);
+
+                GameStarted?.Invoke();
+                return Controller.StartGame(_tokenSource.Token);
+            }
         }
 
         private void SetupGame(GameSettings gameSettings)
         {
+            CombinationOdds.Prepare();
+            
             TimeScale = 1;
             IsPaused = false;
 
             Settings = gameSettings;
-
-            CreateNewStates(gameSettings);
         }
 
-        private void CreateNewStates(GameSettings gameSettings)
+        private void CreateNewStates(GameSettings gameSettings, BotState[] bots = null)
         {
             Statistics = new GameStatistics();
             State = new GameState(Statistics);
             Controller = new GameController(this, State);
-            
-            State.AddMe(PlayerState.CreatePlayer(gameSettings, "Me"));
-            for (int i = 0; i < gameSettings.PlayersCount - 1; i++)
+
+            if (bots == null)
             {
-                State.AddPlayer(BotState.CreateBotPlayer(this, gameSettings, State, $"Player {i + 1}"));
+                State.AddMe(PlayerState.CreatePlayer(gameSettings, "Me"));
+                for (int i = 0; i < gameSettings.PlayersCount - 1; i++)
+                {
+                    State.AddPlayer(BotState.CreateBotPlayer(gameSettings, $"Player {i + 1}"));
+                }
+            }
+            else
+            {
+                foreach (BotState bot in bots)
+                {
+                    State.AddPlayer(bot);
+                }
             }
         }
 
-        public void EndGame(bool win = false)
+        public void EndGame(PlayerState playerState)
         {
-            if (IsPlaying == false)
-                return;
-            
-            IsPlaying = false;
+            lock (this) // Use synchronization to avoid multi thread write
+            {
+                if (IsPlaying == false)
+                    return;
+                
+                IsPlaying = false;
 
-            State = null;
-            Statistics = null;
-            _tokenSource.Cancel();
-            _tokenSource.Dispose();
-            _tokenSource = null;
-            try
-            {
-                GameEnded?.Invoke(win);
-            }
-            catch (Exception e)
-            {
-                Debug.LogException(e);
+                State = null;
+                Statistics = null;
+                _tokenSource.Cancel();
+                _tokenSource.Dispose();
+                _tokenSource = null;
+                try
+                {
+                    GameEnded?.Invoke(playerState);
+                }
+                catch (Exception e)
+                {
+                    Debug.LogException(e);
+                }
             }
         }
 
@@ -303,8 +338,11 @@ namespace Poker.Gameplay.Core
             return new WaitGameTime(this, time);
         }
         
-        public UniTask DelayAsync(float time, CancellationToken cancellationToken = default)
+        public UniTask DelayAsync(float time, CancellationToken cancellationToken = default, bool ignoreOnBotGame = true)
         {
+            if (BotsGame && ignoreOnBotGame)
+                return UniTask.CompletedTask;
+            
             return new UniTask(GameDelayPromise.Create(this, time / 1000f, cancellationToken, out var token), token);
         }
     }

@@ -27,7 +27,7 @@ namespace Poker.Gameplay.Views
 		{
 			_player = _gameManager.State.Me;
 
-			if (_player.Logic is UserLogic userLogic)
+			if (_player?.Logic is UserLogic userLogic)
 			{
 				_logic = userLogic;
 				Table.NewVoterAssigned += NewVoterAssigned;

@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Poker.Gameplay.Core.Models
 {
@@ -12,6 +14,15 @@ namespace Poker.Gameplay.Core.Models
 	
 	public readonly struct CardModel : IEquatable<CardModel>, IComparable<CardModel>
 	{
+		public static CardModel[] Deck { get; } = Enumerable.Range(2, 12)
+			.SelectMany(value => new CardModel[]
+			{
+				new(CardType.Balloon, value),
+				new(CardType.Flame, value),
+				new(CardType.Oil, value),
+				new(CardType.Hills, value),
+			}).ToArray();
+		
 		public readonly CardType Type;
 		public readonly int Value;
 
@@ -75,5 +86,7 @@ namespace Poker.Gameplay.Core.Models
 		{
 			return left.CompareTo(right) >= 0;
 		}
+
+		public static explicit operator int(CardModel card) => card.Value * 10 + (int)card.Type;
 	}
 }

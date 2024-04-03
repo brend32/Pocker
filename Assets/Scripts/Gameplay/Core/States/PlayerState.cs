@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Threading;
+using System.Threading.Tasks;
 using AurumGames.CompositeRoot;
 using Cysharp.Threading.Tasks;
 using Poker.Gameplay.Core.Contracts;
@@ -32,6 +33,12 @@ namespace Poker.Gameplay.Core.States
 		protected readonly CardModel[] _cards = new CardModel[2];
 		protected IndependentEvent _dataChanged;
 
+		public virtual void Reset()
+		{
+			IsOutOfPlay = false;
+			ResetBetState();
+		}
+		
 		public void GiveCards(CardModel card1, CardModel card2)
 		{
 			_cards[0] = card1;
@@ -69,7 +76,7 @@ namespace Poker.Gameplay.Core.States
 		public int MakeBet(int bet)
 		{
 			if (Bet > bet)
-				throw new Exception($"Invalid bet amount, Current: {Bet}, New bet: {bet}");
+				return 0;
 
 			var amount = bet - Bet; 
 			
@@ -112,7 +119,7 @@ namespace Poker.Gameplay.Core.States
 			_response = choice;
 		}
 
-		public async UniTask<VotingResponse> MakeVotingAction(VotingContext context, CancellationToken cancellationToken)
+		public async Task<VotingResponse> MakeVotingAction(VotingContext context, CancellationToken cancellationToken)
 		{
 			_response = null;
 			
@@ -125,6 +132,11 @@ namespace Poker.Gameplay.Core.States
 			}
 
 			return default;
+		}
+
+		public void RoundEnded(PlayerState winner)
+		{
+			
 		}
 	}
 }

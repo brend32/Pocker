@@ -143,6 +143,14 @@ namespace Poker.Screens
 
         public void StartGame()
         {
+            BotGameRunner.FastCreate(Context.Global).StartBotGame(new GameSettings()
+            {
+                PlayersCount = ((PlayersCountButton)_playersCount.Current).Players,
+                StartingCash = _startingCash.Value,
+                Difficulty = GetDifficulty()
+            });
+            return;
+            
             _gameManager.StartGame(new GameSettings()
             {
                 PlayersCount = ((PlayersCountButton)_playersCount.Current).Players,

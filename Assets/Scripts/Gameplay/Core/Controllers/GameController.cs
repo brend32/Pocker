@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 using Cysharp.Threading.Tasks;
 using Poker.Gameplay.Core.Controllers;
 using Poker.Gameplay.Core.States;
@@ -23,7 +25,7 @@ namespace Poker.Gameplay.Core
 			Round = new RoundController(gameManager, state, Animation);
 		}
 
-		public async UniTaskVoid StartGame(CancellationToken cancellationToken)
+		public async Task StartGame(CancellationToken cancellationToken)
 		{
 			_state.StartGame();
 			await _gameManager.DelayAsync(1000, cancellationToken);
@@ -37,19 +39,12 @@ namespace Poker.Gameplay.Core
 
 		private bool IsPlaying()
 		{
-			return _state.Me.IsOutOfPlay == false && _state.Table.PlayersInGame.Count > 1;
+			return _state.Me?.IsOutOfPlay != true && _state.Table.PlayersInGame.Count > 1;
 		}
 
 		public void EndGame()
 		{
-			if (_state.Me.IsOutOfPlay == false)
-			{
-				_gameManager.EndGame(true);
-			}
-			else
-			{
-				_gameManager.EndGame();
-			}
+			_gameManager.EndGame(_state.Table.PlayersInGame.First(state => state.IsOutOfPlay == false));
 		}
 	}
 }

@@ -8,7 +8,7 @@ namespace Poker.Gameplay.Core.Controllers
 	public class AnimationController : IAnimationPresenter
 	{
 		private IAnimationPresenter _presenter;
-		
+
 		public void Register(IAnimationPresenter presenter)
 		{
 			_presenter = presenter;

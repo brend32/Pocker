@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Threading;
+using System.Threading.Tasks;
 using Cysharp.Threading.Tasks;
 using Poker.Gameplay.Core.Models;
+using Poker.Gameplay.Core.States;
 
 namespace Poker.Gameplay.Core.Contracts
 {
@@ -14,6 +16,7 @@ namespace Poker.Gameplay.Core.Contracts
 	
 	public interface IPlayerLogic
 	{
-		UniTask<VotingResponse> MakeVotingAction(VotingContext context, CancellationToken cancellationToken);
+		Task<VotingResponse> MakeVotingAction(VotingContext context, CancellationToken cancellationToken);
+		void RoundEnded(PlayerState winner);
 	}
 }

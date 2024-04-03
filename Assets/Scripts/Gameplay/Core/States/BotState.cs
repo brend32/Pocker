@@ -1,211 +1,427 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 using Cysharp.Threading.Tasks;
+using Poker.Gameplay.Core.BotLogic;
 using Poker.Gameplay.Core.Contracts;
 using Poker.Gameplay.Core.Models;
+using Poker.Utils;
 using UnityEngine;
 
 namespace Poker.Gameplay.Core.States
 {
 	public class BotState : PlayerState
 	{
-		private static readonly Dictionary<Difficulty, float> _fortuneMap = new()
+		public override string ToString()
 		{
-			{ Difficulty.Easy, 0.05f },
-			{ Difficulty.Normal, 0.15f },
-			{ Difficulty.Hard, 0.45f },
-			{ Difficulty.Insane, 0.93f }
-		};
-		
-		private static readonly Dictionary<Difficulty, float> _confidenceMap = new()
-		{
-			{ Difficulty.Easy, 0.92f },
-			{ Difficulty.Normal, 1 },
-			{ Difficulty.Hard, 1.3f },
-			{ Difficulty.Insane, 2 }
-		};
-		
-		private static readonly Dictionary<Difficulty, float> _dumbMap = new()
-		{
-			{ Difficulty.Easy, 0.25f },
-			{ Difficulty.Normal, 0.05f },
-			{ Difficulty.Hard, 0.09f },
-			{ Difficulty.Insane, 0.02f }
-		};
-		
-		private static readonly Dictionary<Difficulty, float> _fearMap = new()
-		{
-			{ Difficulty.Easy, 0.015f },
-			{ Difficulty.Normal, 0.005f },
-			{ Difficulty.Hard, 0.009f },
-			{ Difficulty.Insane, 0.002f }
-		};
-		
-		private static readonly Dictionary<Difficulty, float> _cashMap = new()
-		{
-			{ Difficulty.Easy, 1 },
-			{ Difficulty.Normal, 1 },
-			{ Difficulty.Hard, 1.25f },
-			{ Difficulty.Insane, 2f }
-		};
-		
-		public int Confidence { get; private set; }
-		public float DumbChance { get; private set; }
-		public float FortuneChance { get; private set; }
-		public float FearFactor { get; private set; }
-
-		public void Win()
-		{
-			Confidence += Random.Range(1, 3);
+			return $"{nameof(Wins)}: {Wins}, {nameof(RoundsAlive)}: {RoundsAlive}, {nameof(StrongPairThreshold)}: {StrongPairThreshold}, {nameof(EnemyStrongerCombinationMiddleThreshold)}: {EnemyStrongerCombinationMiddleThreshold}, {nameof(EnemyStrongerCombinationPanicThreshold)}: {EnemyStrongerCombinationPanicThreshold}, {nameof(TrustPairRankThreshold)}: {TrustPairRankThreshold}, {nameof(TrustGain)}: {TrustGain}, {nameof(TrustLoss)}: {TrustLoss}, {nameof(EnemyTrustThreshold)}: {EnemyTrustThreshold}, {nameof(LowMoneyThreshold)}: {LowMoneyThreshold}, {nameof(MinRoundsWithoutFool)}: {MinRoundsWithoutFool}, {nameof(FoolChance)}: {FoolChance}, {nameof(SilentChance)}: {SilentChance}, {nameof(PanicThreshold)}: {PanicThreshold}, {nameof(BlindPanicThreshold)}: {BlindPanicThreshold}, {nameof(MoneyPanicMultiplier)}: {MoneyPanicMultiplier}, {nameof(PairRankPanicMultiplier)}: {PairRankPanicMultiplier}, {nameof(EnemyStrongerCombinationPanicMultiplier)}: {EnemyStrongerCombinationPanicMultiplier}, {nameof(FoolRaisePercent)}: {FoolRaisePercent}, {nameof(StrongPairRaisePercent)}: {StrongPairRaisePercent}, {nameof(RaiseOffset)}: {RaiseOffset}, {nameof(BetPanicMultiplier)}: {BetPanicMultiplier}, {nameof(SkipTurnChance)}: {SkipTurnChance}";
 		}
 
-		public void Lose()
+		public int PairRank { get; private set; }
+		public int RoundsWithoutFool { get; private set; }
+		public int StartingCash { get; private set; }
+		public Dictionary<PlayerState, double> TrustMap { get; private set; } = new();
+		
+		public int Wins { get; private set; }
+		public int RoundsAlive { get; private set; }
+
+		public int StrongPairThreshold { get; set; } = 19;
+		public double EnemyStrongerCombinationMiddleThreshold { get; private set; } = 0.51371320977807;
+		public double EnemyStrongerCombinationPanicThreshold { get; private set; } = 0.405301503837109;
+		public int TrustPairRankThreshold { get; private set; } = 13;
+		public double TrustGain { get; private set; } = 0.340960390865803;
+		public double TrustLoss { get; private set; } = 0.523207994401455;
+		public double EnemyTrustThreshold { get; private set; } = 0.441805862672627;
+		public double LowMoneyThreshold { get; private set; } = 0.408863117620349;
+		public int MinRoundsWithoutFool { get; private set; } = 21;
+		public double FoolChance { get; private set; } = 0.432952526481822;
+		public double SilentChance { get; private set; } = 0.503569041788578;
+		public double PanicThreshold { get; private set; } = 0.551069484502077;
+		public double BlindPanicThreshold { get; private set; } = 0.4534722879529;
+		public double MoneyPanicMultiplier { get; private set; } = 0.506963741928339;
+		public double PairRankPanicMultiplier { get; private set; } = 0.519698183909059;
+		public double EnemyStrongerCombinationPanicMultiplier { get; private set; } = 0.571910247504711;
+		public double FoolRaisePercent { get; private set; } = 0.554264077916741;
+		public double StrongPairRaisePercent { get; private set; } = 0.460994556993246;
+		public double RaiseOffset { get; private set; } = 0.576030493974686;
+		public double BetPanicMultiplier { get; private set; } = 0.540366609245539;
+		public double SkipTurnChance { get; private set; } = 0.476075193881988;
+
+		public void CountWin()
 		{
-			Confidence -= 1;
+			Wins++;
+		}
+		
+		public void CountAliveRound()
+		{
+			RoundsAlive++;
+		}
+		
+		public override void Reset()
+		{
+			Balance = StartingCash;
+			TrustMap.Clear();
+			ResetRoundWithoutFoolCounter();
+			base.Reset();
 		}
 
-		public static BotState CreateBotPlayer(GameManager gameManager, GameSettings gameSettings, GameState state, string name)
+		public void Copy(BotState bot)
+		{
+			// Copy parameters from another bot
+			StrongPairThreshold = bot.StrongPairThreshold; 
+			EnemyStrongerCombinationMiddleThreshold = bot.EnemyStrongerCombinationMiddleThreshold; 
+			EnemyStrongerCombinationPanicThreshold = bot.EnemyStrongerCombinationPanicThreshold; 
+			TrustPairRankThreshold = bot.TrustPairRankThreshold; 
+			TrustGain = bot.TrustGain; 
+			TrustLoss = bot.TrustLoss; 
+			EnemyTrustThreshold = bot.EnemyTrustThreshold; 
+			LowMoneyThreshold = bot.LowMoneyThreshold; 
+			MinRoundsWithoutFool = bot.MinRoundsWithoutFool; 
+			FoolChance = bot.FoolChance; 
+			SilentChance = bot.SilentChance; 
+			PanicThreshold = bot.PanicThreshold; 
+			BlindPanicThreshold = bot.BlindPanicThreshold; 
+			MoneyPanicMultiplier = bot.MoneyPanicMultiplier; 
+			PairRankPanicMultiplier = bot.PairRankPanicMultiplier; 
+			EnemyStrongerCombinationPanicMultiplier = bot.EnemyStrongerCombinationPanicMultiplier; 
+			FoolRaisePercent = bot.FoolRaisePercent; 
+			StrongPairRaisePercent = bot.StrongPairRaisePercent; 
+			RaiseOffset = bot.RaiseOffset; 
+			BetPanicMultiplier = bot.BetPanicMultiplier; 
+			SkipTurnChance = bot.SkipTurnChance; 
+		}
+
+		public void SetPairRank()
+		{
+			PairRank = CombinationOdds.GetPairRank(_cards);
+		}
+
+		public void IncrementRoundWithoutFoolCounter()
+		{
+			RoundsWithoutFool++;
+		}
+
+		public void ResetRoundWithoutFoolCounter()
+		{
+			RoundsWithoutFool = 0;
+		}
+
+		public void FillTrustMap(TableState table)
+		{
+			foreach (PlayerState state in table.PlayersInGame)
+			{
+				TrustMap.Add(state, 0);
+			}
+		}
+
+		public void UpdateTrustMap(TableState table)
+		{
+			if (TrustMap.Count == 0)
+			{
+				FillTrustMap(table);
+			}
+			
+			foreach (PlayerState state in table.PlayersInGame.Where(p => p.Folded == false))
+			{
+				var playerCardsRank = CombinationOdds.GetPairRank(state.Cards);
+				if (playerCardsRank >= TrustPairRankThreshold)
+				{
+					TrustMap[state] += TrustGain;
+				}
+				else
+				{
+					TrustMap[state] -= TrustLoss;
+				}
+			}
+		}
+
+		public void ResetGoals()
+		{
+			Wins = 0;
+			RoundsAlive = 0;
+		}
+		
+		public void Mutate()
+		{
+			// Mutating properties to get new behaviour
+			for (int i = 0; i < 5; i++)
+			{
+				int n = RandomUtils.Random.Next(0, 30);
+				if (RandomUtils.Random.NextDouble() < 0.25)
+					continue;
+				
+				switch (n)
+				{
+					case 0:
+						StrongPairThreshold += RandomUtils.Random.Next(-15, 15);
+						break;
+					case 1:
+						EnemyStrongerCombinationMiddleThreshold += (RandomUtils.Random.NextDouble() - 0.5) * 0.13;
+						break;
+					case 2:
+						EnemyStrongerCombinationPanicThreshold += (RandomUtils.Random.NextDouble() - 0.5) * 0.13;
+						break;
+					case 3:
+						TrustPairRankThreshold += RandomUtils.Random.Next(-15, 15);
+						break;
+					case 4:
+						TrustGain += (RandomUtils.Random.NextDouble() - 0.5) * 0.13;
+						break;
+					case 5:
+						TrustLoss += (RandomUtils.Random.NextDouble() - 0.5) * 0.13;
+						break;
+					case 6:
+						EnemyTrustThreshold += (RandomUtils.Random.NextDouble() - 0.5) * 0.13;
+						break;
+					case 7:
+						LowMoneyThreshold += (RandomUtils.Random.NextDouble() - 0.5) * 0.13;
+						break;
+					case 8:
+						MinRoundsWithoutFool += RandomUtils.Random.Next(-15, 15);
+						break;
+					case 9:
+						FoolChance += (RandomUtils.Random.NextDouble() - 0.5) * 0.13;
+						break;
+					case 10:
+						SilentChance += (RandomUtils.Random.NextDouble() - 0.5) * 0.13;
+						break;
+					case 11:
+						PanicThreshold += (RandomUtils.Random.NextDouble() - 0.5) * 0.13;
+						break;
+					case 12:
+						BlindPanicThreshold += (RandomUtils.Random.NextDouble() - 0.5) * 0.13;
+						break;
+					case 13:
+						MoneyPanicMultiplier += (RandomUtils.Random.NextDouble() - 0.5) * 0.13;
+						break;
+					case 14:
+						PairRankPanicMultiplier += (RandomUtils.Random.NextDouble() - 0.5) * 0.13;
+						break;
+					case 15:
+						EnemyStrongerCombinationPanicMultiplier += (RandomUtils.Random.NextDouble() - 0.5) * 0.13;
+						break;
+					case 16:
+						FoolRaisePercent += (RandomUtils.Random.NextDouble() - 0.5) * 0.13;
+						break;
+					case 17:
+						StrongPairRaisePercent += (RandomUtils.Random.NextDouble() - 0.5) * 0.13;
+						break;
+					case 18:
+						RaiseOffset += (RandomUtils.Random.NextDouble() - 0.5) * 0.13;
+						break;
+					case 19:
+						BetPanicMultiplier += (RandomUtils.Random.NextDouble() - 0.5) * 0.13;
+						break;
+					case 20:
+						SkipTurnChance += (RandomUtils.Random.NextDouble() - 0.5) * 0.13;
+						break;
+					
+					case 25:
+						return;
+				}
+			}
+		}
+		
+		public static BotState CreateBotPlayer(GameSettings gameSettings, string name)
 		{
 			var player = new BotState()
 			{
-				Balance = Mathf.CeilToInt(gameSettings.StartingCash * _cashMap[gameSettings.Difficulty]),
+				Balance = gameSettings.StartingCash,
+				StartingCash = gameSettings.StartingCash,
 				Name = name,
-				
-				Confidence = Mathf.CeilToInt(Random.Range(3, 8) * _confidenceMap[gameSettings.Difficulty]),
-				DumbChance = _dumbMap[gameSettings.Difficulty],
-				FortuneChance = _fortuneMap[gameSettings.Difficulty] + Random.Range(0, 0.05f),
-				FearFactor = _fearMap[gameSettings.Difficulty] + Random.Range(-0.003f, 0.03f)
+				Logic = new BotLogic(),
 			};
-			var logic = new BotLogic(player, state, gameManager);
-			player.Logic = logic;
 			return player;
 		}
 	}
 	
 	public class BotLogic : IPlayerLogic
 	{
-		private readonly BotState _state;
+		private BotState _state;
+		private TableState _table;
+		private VotingContext _votingContext;
 		private readonly GameManager _gameManager;
-		private readonly TableState _tableState;
-		private readonly PlayerState _user;
 
-		public BotLogic(BotState state, GameState gameState, GameManager gameManager)
+		private bool IsLowMoney => _state.Balance < _state.LowMoneyThreshold * _state.StartingCash;
+		private bool IsStrongPair => _state.PairRank >= _state.StrongPairThreshold;
+		private double _panicLevel;
+		private double _higherEnemyCombinationChance;
+		private int _combinationValue;
+		private bool _isFooling;
+		private bool _isSilent;
+
+		public async Task<VotingResponse> MakeVotingAction(VotingContext context, CancellationToken cancellationToken)
 		{
-			_state = state;
-			_gameManager = gameManager;
-			_tableState = gameState.Table;
-			_user = gameState.Me;
+			_votingContext = context;
+			GatherInfo(context);
+			var hasBets = _votingContext.MinimumBet != 20;
 
-			_tableState.DecidedWinner += winner =>
+			// Updating required fields
+			if (_table.CardsRevealed == 0)
 			{
-				if (winner == _state)
-				{
-					_state.Win();
-				}
-				else
-				{
-					_state.Lose();
-				}
-			};
-		}
-
-		private Combination GetCombination()
-		{
-			return new Combination(_state.Cards, _tableState.Cards.Take(_tableState.CardsRevealed));
-		}
-
-		public async UniTask<VotingResponse> MakeVotingAction(VotingContext context, CancellationToken cancellationToken)
-		{
-			Combination combination = GetCombination();
-			if (Random.value < _state.DumbChance)
-			{
-				Debug.Log("Dumb 1");
-				return await MakeDumbAction(context);
+				_state.SetPairRank();
 			}
+			else
+			{
+				UpdateCombinationValue();
+				UpdateHigherEnemyCombinationChance();
 
-			var sum = 0;
-			if (Random.value < _state.FortuneChance)
-			{
-				combination = new Combination(_state.Cards, _tableState.Cards);
-				if (Random.value < _state.FortuneChance * _state.FortuneChance)
+				if (_higherEnemyCombinationChance >= _state.EnemyStrongerCombinationPanicThreshold)
 				{
-					var userCombination = new Combination(_user.Cards, _tableState.Cards);
-					if (userCombination < combination)
+					if (_isFooling)
 					{
-						sum += (_tableState.CardsRevealed + 1) * 3;
+						return VotingResponse.Call();
 					}
-					else
-					{
-						sum -= (_tableState.CardsRevealed + 1) * 3;
-					}
-				}
-			}
-			
-			sum += Mathf.CeilToInt(_state.Confidence / 3f) * combination.CombinationIndex + _state.Balance / 45;
-			
-			
-			if (Random.value < _state.FearFactor * (_tableState.CardsRevealed + 1) / 3 && context.MinimumBet > 150)
-			{
-				await _gameManager.DelayAsync(Mathf.CeilToInt(Random.value * 2750) + 350, cancellationToken: cancellationToken);
-				if (_state.Confidence > 6 && Random.value < _state.FearFactor)
-				{
-					Debug.Log("Fear 1");
+					
 					return VotingResponse.Fold();
 				}
-				
-				if (_state.Balance > 300)
+			}
+			UpdatePanicLevel(hasBets);
+			TrySetFoolingState();
+			TrySetSilentState();
+
+			// Choosing response based on current state
+			if (hasBets == false && _table.CardsRevealed == 0)
+				return BlindGuess();
+
+			if (hasBets && _table.CardsRevealed == 0)
+				return BlindGuessWithTrust();
+			
+			if (_panicLevel >= _state.PanicThreshold)
+				return VotingResponse.Fold();
+
+			if (_state.SkipTurnChance >= RandomUtils.Random.NextDouble())
+				return VotingResponse.Call();
+			
+			if (_isSilent && _table.CardsRevealed == 3)
+				return VotingResponse.Call();
+			
+			if (_isSilent && (_isFooling || IsStrongPair) && _table.CardsRevealed > 4)
+				return VotingResponse.Raise(GetRaiseAmount());
+			
+			if (_state.EnemyStrongerCombinationMiddleThreshold < _higherEnemyCombinationChance)
+				return VotingResponse.Raise(GetRaiseAmount());
+			
+			return VotingResponse.Call();
+		}
+
+		public void RoundEnded(PlayerState winner)
+		{
+			if (_state.IsOutOfPlay)
+				return;
+
+			_state.CountAliveRound();
+			
+			if (_isFooling == false)
+				_state.IncrementRoundWithoutFoolCounter();
+			
+			_isSilent = false;
+			_isFooling = false;
+			_state.UpdateTrustMap(_table);
+		}
+
+		private void TrySetFoolingState()
+		{
+			if (_state.RoundsWithoutFool < _state.MinRoundsWithoutFool)
+				return;
+			
+			_isFooling = RandomUtils.Random.NextDouble() <= _state.FoolChance;
+			_state.ResetRoundWithoutFoolCounter();
+		}
+
+		private void TrySetSilentState()
+		{
+			_isSilent = RandomUtils.Random.NextDouble() <= _state.SilentChance;
+		}
+
+		private void UpdateCombinationValue()
+		{
+			_combinationValue = new Combination(_state.Cards, _table.Cards.Take(_table.CardsRevealed)).Value;
+		}
+
+		private void UpdateHigherEnemyCombinationChance()
+		{
+			_higherEnemyCombinationChance = CombinationOdds
+				.GetHigherCombinationsPercent(_table.Cards.Take(_table.CardsRevealed).ToArray(), _combinationValue);
+		}
+
+		private void UpdatePanicLevel(bool includeTrust)
+		{
+			_panicLevel = 0;
+			_panicLevel -= _state.MoneyPanicMultiplier * _state.Balance;
+			_panicLevel -= _state.PairRank * _state.PairRankPanicMultiplier;
+			_panicLevel += _votingContext.MinimumBet * _state.BetPanicMultiplier;
+			_panicLevel += _higherEnemyCombinationChance * _state.EnemyStrongerCombinationPanicMultiplier;
+
+			if (includeTrust)
+			{
+				foreach (PlayerState enemy in _table.PlayersInGame.Where(p => p.Folded == false))
 				{
-					Debug.Log("Fear 2");
-					return VotingResponse.Call();
+					if (_state.TrustMap[enemy] > _state.EnemyTrustThreshold)
+					{
+						_panicLevel += _votingContext.MinimumBet * _state.BetPanicMultiplier;
+					}
 				}
-				
-				Debug.Log("Fear 3");
+			}
+		}
+
+		private int GetRaiseAmount()
+		{
+			var raisePercent = _isFooling ? _state.FoolRaisePercent : _state.StrongPairRaisePercent;
+			
+			return Mathf.CeilToInt(
+				_state.Balance *
+				Mathf.Max(
+					0.01f,
+					(float)(raisePercent + _state.RaiseOffset * RandomUtils.Random.NextDouble())
+				)
+			);
+		}
+
+		private VotingResponse BlindGuess()
+		{
+			if (_panicLevel >= _state.BlindPanicThreshold)
+				return VotingResponse.Fold();
+			
+			if (IsStrongPair && _isFooling == false)
+			{
+				return VotingResponse.Raise(GetRaiseAmount());
+			}
+			
+			if (IsLowMoney && _isFooling == false)
+			{
 				return VotingResponse.Fold();
 			}
 
-			if (_state.Confidence < 3)
+			return VotingResponse.Call();
+		}
+		
+		private VotingResponse BlindGuessWithTrust()
+		{
+			if (_panicLevel >= _state.PanicThreshold)
+				return VotingResponse.Fold();
+			
+			if (IsStrongPair || _isFooling)
 			{
-				Debug.Log("Dumb 2");
-				return await MakeDumbAction(context);
+				return VotingResponse.Raise(GetRaiseAmount());
 			}
 			
-			Debug.Log($"Sum {sum}, Confidence: {_state.Confidence}, CombinationIndex: {combination.CombinationIndex}");
-			await _gameManager.DelayAsync(Mathf.CeilToInt(Random.value * 2050) + 550, cancellationToken: cancellationToken);
-			if (sum > 30)
-				return VotingResponse.Raise(Random.Range(Mathf.FloorToInt(_state.Balance * 0.45f), _state.Balance));
-			
-			if (sum > 20)
-				return VotingResponse.Raise(Random.Range(Mathf.FloorToInt(_state.Balance * 0.15f), Mathf.FloorToInt(_state.Balance * 0.45f)));
-			
-			if (sum > 10)
-				return VotingResponse.Raise(Random.Range(Mathf.FloorToInt(_state.Balance * 0.05f),
-					Mathf.FloorToInt(_state.Balance * 0.15f)));
-			
-			if (sum > 4)
-				return VotingResponse.Call();
-			
-			return VotingResponse.Fold();
+			if (IsLowMoney)
+			{
+				return VotingResponse.Fold();
+			}
+
+			return VotingResponse.Call();
 		}
 
-		private async UniTask<VotingResponse> MakeDumbAction(VotingContext context)
+		private void GatherInfo(VotingContext context)
 		{
-			if (context.MinimumBet / (float)_state.Balance > 0.25f)
-			{
-				await _gameManager.DelayAsync((int)Random.value * 700 + 150);
-				if (Random.value < _state.FortuneChance == false)
-				{
-					return VotingResponse.Fold();
-				}
-			}
-
-			await _gameManager.DelayAsync(700);
-			return Random.Range(0, 3) switch
-			{
-				1 => VotingResponse.Fold(),
-				2 => VotingResponse.Raise(Mathf.CeilToInt(Random.value * 0.5f * _state.Balance)),
-				_ => VotingResponse.Call()
-			};
+			_state ??= (BotState)context.Voter;
+			_table ??= context.Table;
+			
+			if (_state.TrustMap.Count == 0)
+				_state.FillTrustMap(_table);
 		}
 	}
 }

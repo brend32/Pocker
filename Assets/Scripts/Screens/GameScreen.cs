@@ -32,7 +32,7 @@ namespace Poker.Screens
 
         public void ExitToMenu()
         {
-            _gameManager.EndGame();
+            _gameManager.EndGame(null);
             PageSystem.LoadWithLoading<LoadingScreen, MenuScreen>();
         }
 

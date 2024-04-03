@@ -139,6 +139,8 @@ namespace Poker.Gameplay.Views
 			if (_gameManager.IsPlaying == false)
 				return;
 			
+			_card1.Revealed = IsMe;
+			_card2.Revealed = IsMe;
 			DataChanged();
 			await UniTask.WhenAll(
 				_card1.ShowAnimation(cancellationToken),

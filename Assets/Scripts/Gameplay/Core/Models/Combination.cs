@@ -6,35 +6,50 @@ namespace Poker.Gameplay.Core.Models
 {
 	public struct Combination : IEquatable<Combination>, IComparable<Combination>
 	{
+		// Use buffers to avoid allocations
+		// Using thread static to prevent multi thread write 
+		[ThreadStatic] private static int[] _buffer;
+		[ThreadStatic] private static int[] _sameValueCards;
+		[ThreadStatic] private static int[] _sameTypeCards;
+		
 		public string Name { get; private set; }
 		public int Value { get; private set; }
 		public int CombinationIndex { get; private set; }
 		
-		public Combination(IEnumerable<CardModel> playerCards, IEnumerable<CardModel> tableCards)
+		public Combination(IEnumerable<CardModel> playerCards, IEnumerable<CardModel> tableCards) 
+			: this(playerCards.Concat(tableCards).ToArray())
+		{
+			
+		}
+		
+		public Combination(CardModel[] cards)
 		{
 			Name = string.Empty;
 			Value = -1;
 			CombinationIndex = -1;
 			
-			FormCombination(playerCards, tableCards);
+			FormCombination(cards);
 		}
 
-		private void FormCombination(IEnumerable<CardModel> playerCards, IEnumerable<CardModel> tableCards)
+		private void FormCombination(CardModel[] cards)
 		{
-			var combined = playerCards.Concat(tableCards).ToArray();
-
-			foreach (CardModel card in combined)
+			foreach (CardModel card in cards)
 			{
 				if (card.Value is < 2 or > 13)
 					return;
 			}
 			
-			Array.Sort(combined);
+			_buffer ??= new int[6];
+			_sameValueCards ??= new int[20];
+			_sameTypeCards ??= new int[4];
+			
+			Array.Clear(_buffer, 0, _buffer.Length);
+			Array.Clear(_sameValueCards, 0, _sameValueCards.Length);
+			Array.Clear(_sameTypeCards, 0, _sameTypeCards.Length);
+			Array.Sort(cards);
 
-			var sameValueCards = Enumerable.Range(2, 14).ToDictionary(i => i, i => 0);
-			var sameTypeCards =
-				new[] { CardType.Balloon, CardType.Flame, CardType.Oil, CardType.Hills }.ToDictionary(i => i,
-					i => 0);
+			var sameValueCards = _sameValueCards;
+			var sameTypeCards = _sameTypeCards;
 			var pairs = 0;
 			var threes = 0;
 			int? fourValue = null;
@@ -43,9 +58,9 @@ namespace Poker.Gameplay.Core.Models
 			var streak = 1;
 			var previous = 0;
 
-			for (var i = 0; i < combined.Length; i++)
+			for (var i = 0; i < cards.Length; i++)
 			{
-				var card = combined[i];
+				var card = cards[i];
 				var sameValueCount = ++sameValueCards[card.Value];
 				if (sameValueCount % 2 == 0)
 					pairs++;
@@ -54,12 +69,12 @@ namespace Poker.Gameplay.Core.Models
 				if (sameValueCount >= 4)
 					fourValue = card.Value;
 
-				if (++sameTypeCards[card.Type] >= 5)
+				if (++sameTypeCards[(int)card.Type] >= 5)
 					flush = card.Type;
 
 				if (i == 0)
 				{
-					if (combined[^1].Value == 13 && card.Value == 2)
+					if (cards[^1].Value == 13 && card.Value == 2)
 					{
 						streak++;
 					}
@@ -88,7 +103,7 @@ namespace Poker.Gameplay.Core.Models
 
 			if (flush != null && straight)
 			{
-				if (TryStraightFlush(combined, flush.Value, out var combinationValue))
+				if (TryStraightFlush(cards, flush.Value, out var combinationValue))
 				{
 					Name = "Straight flush";
 					Value = combinationValue;
@@ -100,7 +115,7 @@ namespace Poker.Gameplay.Core.Models
 			if (fourValue != null)
 			{
 				Name = "Four of a kind";
-				Value = PackFour(combined, fourValue.Value);
+				Value = PackFour(cards, fourValue.Value);
 				CombinationIndex = 8;
 				return;
 			}
@@ -119,7 +134,7 @@ namespace Poker.Gameplay.Core.Models
 			if (flush != null)
 			{
 				Name = "Flush";
-				Value = PackFlush(combined, flush.Value);
+				Value = PackFlush(cards, flush.Value);
 				CombinationIndex = 6;
 				return;
 			}
@@ -127,7 +142,7 @@ namespace Poker.Gameplay.Core.Models
 			if (straight)
 			{
 				Name = "Straight";
-				Value = PackStraight(combined);
+				Value = PackStraight(cards);
 				CombinationIndex = 5;
 				return;
 			}
@@ -135,7 +150,7 @@ namespace Poker.Gameplay.Core.Models
 			if (threes > 0)
 			{
 				Name = "Three of a kind";
-				Value = PackThrees(combined, sameValueCards);
+				Value = PackThrees(cards, sameValueCards);
 				CombinationIndex = 4;
 				return;
 			}
@@ -146,19 +161,19 @@ namespace Poker.Gameplay.Core.Models
 				if (pairs == 1)
 				{
 					Name = "Pair";
-					Value = PackOnePair(combined, sameValueCards);
+					Value = PackOnePair(cards, sameValueCards);
 					CombinationIndex = 2;
 					return;
 				}
 				
 				Name = "Two pairs";
-				Value = PackTwoPairs(combined, sameValueCards);
+				Value = PackTwoPairs(cards, sameValueCards);
 				CombinationIndex = 3;
 				return;
 			}
 
 			Name = "Highest card";
-			Value = PackHighest(combined);
+			Value = PackHighest(cards);
 			CombinationIndex = 1;
 		}
 		
@@ -209,7 +224,7 @@ namespace Poker.Gameplay.Core.Models
 			if (streak < 5)
 				return false;
 
-			var values = new int[6];
+			var values = _buffer;
 			values[0] = 9;
 			for (int i = streakStart, ci = 0; i >= 0; i--)
 			{
@@ -242,7 +257,7 @@ namespace Poker.Gameplay.Core.Models
 				break;
 			}
 
-			var values = new int[6];
+			var values = _buffer;
 			values[0] = 8;
 			values[1] = fourValue;
 			values[2] = highestCardValue;
@@ -250,7 +265,7 @@ namespace Poker.Gameplay.Core.Models
 			return Pack(values);
 		}
 		
-		private static bool TryPackFullHouse(Dictionary<int, int> sameValueCount, out int combinationValue)
+		private static bool TryPackFullHouse(int[] sameValueCount, out int combinationValue)
 		{
 			combinationValue = -1;
 			var highestThrees = -1;
@@ -261,23 +276,21 @@ namespace Poker.Gameplay.Core.Models
 				if (highestThrees != -1 && highestPair != -1)
 					break;
 
-				if (sameValueCount.TryGetValue(i, out var count))
+				var count = sameValueCount[i];
+				if (highestThrees == -1 && count >= 3)
 				{
-					if (highestThrees == -1 && count >= 3)
-					{
-						highestThrees = i;
-					}
-					else if (highestPair == -1 && count >= 2)
-					{
-						highestPair = i;
-					}
+					highestThrees = i;
+				}
+				else if (highestPair == -1 && count >= 2)
+				{
+					highestPair = i;
 				}
 			}
 
 			if (highestThrees == -1 || highestPair == -1)
 				return false;
 
-			var values = new int[6];
+			var values = _buffer;
 			values[0] = 7;
 			values[1] = highestThrees;
 			values[2] = highestPair;
@@ -288,7 +301,7 @@ namespace Poker.Gameplay.Core.Models
 		
 		private static int PackFlush(CardModel[] cards, CardType flush)
 		{
-			var values = new int[6];
+			var values = _buffer;
 			values[0] = 6;
 			for (int i = cards.Length - 1, ci = 0; i >= 0; i--)
 			{
@@ -347,30 +360,28 @@ namespace Poker.Gameplay.Core.Models
 				previous = card.Value;
 			}
 
-			var values = new int[6];
+			var values = _buffer;
 			values[0] = 5;
 			values[1] = cards[streakStart].Value;
 
 			return Pack(values);
 		}
 		
-		private static int PackThrees(CardModel[] cards, Dictionary<int, int> sameValueCount)
+		private static int PackThrees(CardModel[] cards, int[] sameValueCount)
 		{
 			var highestThrees = -1;
 
 			for (var i = 14; i >= 2; i--)
 			{
-				if (sameValueCount.TryGetValue(i, out var count))
+				var count = sameValueCount[i];
+				if (count >= 3)
 				{
-					if (count >= 3)
-					{
-						highestThrees = i;
-						break;
-					}
+					highestThrees = i;
+					break;
 				}
 			}
 
-			var values = new int[6];
+			var values = _buffer;
 			values[0] = 4;
 			values[1] = highestThrees;
 
@@ -390,23 +401,21 @@ namespace Poker.Gameplay.Core.Models
 			return Pack(values);
 		}
 		
-		private static int PackOnePair(CardModel[] cards, Dictionary<int, int> sameValueCount)
+		private static int PackOnePair(CardModel[] cards, int[] sameValueCount)
 		{
 			var highestPair = -1;
 
 			for (var i = 14; i >= 2; i--)
 			{
-				if (sameValueCount.TryGetValue(i, out var count))
+				var count = sameValueCount[i];
+				if (count >= 2)
 				{
-					if (count >= 2)
-					{
-						highestPair = i;
-						break;
-					}
+					highestPair = i;
+					break;
 				}
 			}
 
-			var values = new int[6];
+			var values = _buffer;
 			values[0] = 2;
 			values[1] = highestPair;
 
@@ -426,7 +435,7 @@ namespace Poker.Gameplay.Core.Models
 			return Pack(values);
 		}
 		
-		private static int PackTwoPairs(CardModel[] cards, Dictionary<int, int> sameValueCount)
+		private static int PackTwoPairs(CardModel[] cards, int[] sameValueCount)
 		{
 			var highestPairFirst = -1;
 			var highestPairSecond = -1;
@@ -436,7 +445,7 @@ namespace Poker.Gameplay.Core.Models
 				if (highestPairFirst != -1 && highestPairSecond != -1)
 					break;
 
-				if (sameValueCount.TryGetValue(i, out var count))
+				var count = sameValueCount[i];
 				{
 					if (count < 2)
 						continue;
@@ -452,7 +461,7 @@ namespace Poker.Gameplay.Core.Models
 				}
 			}
 
-			var values = new int[6];
+			var values = _buffer;
 			values[0] = 3;
 			values[1] = highestPairFirst;
 			values[2] = highestPairSecond;
@@ -475,7 +484,7 @@ namespace Poker.Gameplay.Core.Models
 		
 		private static int PackHighest(CardModel[] cards)
 		{
-			var values = new int[6];
+			var values = _buffer;
 			values[0] = 1;
 
 			for (int i = cards.Length - 1, ci = 0; i >= 0; i--)

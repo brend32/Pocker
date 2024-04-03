@@ -34,9 +34,18 @@ namespace Poker.Gameplay.Views
 
 		public void Bind()
 		{
+			_map.Clear();
+			
 			PlayerState me = _gameManager.State.Me;
-			_map.Add(me, _me);
-			_me.BindTo(me);
+			if (me != null)
+			{
+				_map.Add(me, _me);
+				_me.BindTo(me);
+			}
+			else
+			{
+				_me.Hide();
+			}
 			var players = _gameManager.State.Players.Where(player => player != me).ToArray();
 
 			if (players.Length > _others.Length)

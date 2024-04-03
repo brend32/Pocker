@@ -49,12 +49,12 @@ namespace Poker.Gameplay.Core
 			Voting = new VotingCycleController(gameManager, state, animationController);
 		}
 		
-		public async UniTask StartRound(CancellationToken cancellationToken)
+		public async Task StartRound(CancellationToken cancellationToken)
 		{
 			if (_gameManager.IsPlaying == false)
 				return;
 			
-			Debug.Log("Started round " + _state.Round);
+			//Debug.Log("Started round " + _state.Round);
 			_state.StartNewRound();
 			_roundStarted.Invoke();
 			await _animationController.DealCards(cancellationToken);
@@ -68,28 +68,32 @@ namespace Poker.Gameplay.Core
 				await _animationController.RevealCard(cancellationToken);
 			}
 
-			Debug.Log("Reveal cards");
+			//Debug.Log("Reveal cards");
 			_revealCards.Invoke();
 			await _animationController.RevealCardsRoundEnd(cancellationToken);
 			_table.DecideWinner();
-			Debug.Log("Decide winner");
+			//Debug.Log("Decide winner");
 			await _gameManager.DelayAsync(5000, cancellationToken);
 			
 			await EndRound(cancellationToken);
 		}
 
-		public async UniTask StartVotingCycle(CancellationToken cancellationToken)
+		public async Task StartVotingCycle(CancellationToken cancellationToken)
 		{
-			Debug.Log("Started new voting cycle");
+			//Debug.Log("Started new voting cycle");
 			await Voting.StartVotingCycle(cancellationToken);
 		}
 
-		public async UniTask EndRound(CancellationToken cancellationToken)
+		public async Task EndRound(CancellationToken cancellationToken)
 		{
 			_table.EndRound();
 			_roundEnded.Invoke();
+			foreach (PlayerState state in _table.PlayersInGame)
+			{
+				state.Logic.RoundEnded(_table.Winner);
+			}
 			await _animationController.RoundEnd(cancellationToken);
-			Debug.Log("Round ended");
+			//Debug.Log("Round ended");
 		}
 	}
 }

@@ -97,11 +97,8 @@ namespace AurumGames.Animation
 
         private void InternalEvaluateAt(float time, bool isBackwards)
         {
-            time -= _startDelay;
-            if (time < 0)
-                time = 0;
-            
             Position = time;
+            time = MathF.Max(time - _startDelay, 0);
             foreach (ITrack track in _tracks)
             {
                 track.Evaluate(time, isBackwards);

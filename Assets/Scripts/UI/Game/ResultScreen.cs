@@ -5,6 +5,7 @@ using AurumGames.Animation.Tracks;
 using AurumGames.CompositeRoot;
 using AurumGames.SceneManagement;
 using Poker.Gameplay.Core;
+using Poker.Gameplay.Core.States;
 using Poker.Screens;
 using UnityEngine;
 using UnityEngine.UI;
@@ -21,6 +22,7 @@ namespace Poker.UI.Game
 		
 		[Dependency] private GameManager _gameManager;
 
+		private PlayerState _me;
 		private StatedAnimationPlayer<Visibility> _animation;
 		
 		protected override void InitInnerState()
@@ -55,6 +57,7 @@ namespace Poker.UI.Game
 
 		protected override void Initialized()
 		{
+			_me = _gameManager.State.Me;
 			_gameManager.GameEnded += GameEnded;
 		}
 
@@ -63,9 +66,9 @@ namespace Poker.UI.Game
 			_gameManager.GameEnded -= GameEnded;
 		}
 
-		private void GameEnded(bool win)
+		private void GameEnded(PlayerState winner)
 		{
-			_result.sprite = win ? _win : _lose;
+			_result.sprite = _me == winner ? _win : _lose;
 			Open();
 		}
 

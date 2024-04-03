@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading;
+using System.Threading.Tasks;
 using AurumGames.CompositeRoot;
 using Cysharp.Threading.Tasks;
 using Poker.Gameplay.Core.Models;
@@ -31,7 +32,7 @@ namespace Poker.Gameplay.Core.Controllers
 			_table = state.Table;
 		}
 
-		public async UniTask StartVotingCycle(CancellationToken cancellationToken)
+		public async Task StartVotingCycle(CancellationToken cancellationToken)
 		{
 			if (_gameManager.IsPlaying == false)
 				return;
@@ -59,27 +60,11 @@ namespace Poker.Gameplay.Core.Controllers
 					else
 					{
 						if (i == 2 && _table.CardsRevealed == 0)
+						{
 							_table.ResetVotingCycle();
-						
-						using var tokenSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-
-						var votingContext = new VotingContext();
-						var thinkingTask = _table.Voter.Logic.MakeVotingAction(votingContext, tokenSource.Token).Preserve();
-						var result = await UniTask.WhenAny(
-							_gameManager.DelayAsync(40000, cancellationToken: tokenSource.Token),
-							thinkingTask);
-
-						if (_gameManager.IsPlaying == false)
-							return;
-						
-						if (result == 1)
-						{
-							response = thinkingTask.GetAwaiter().GetResult();
 						}
-						else
-						{
-							tokenSource.Cancel();
-						}
+
+						response = await GetActionResponse(cancellationToken);
 						MakeVoteAction(response);
 
 						await _animationController.MakeChoice(_table.Voter, response, cancellationToken);
@@ -87,18 +72,46 @@ namespace Poker.Gameplay.Core.Controllers
 				}
 
 				_table.AssignNextVoter();
-				Debug.Log("New voter: " + _table.Voter.Name);
+				//Debug.Log("New voter: " + _table.Voter.Name);
 				i++;
+				//await _gameManager.DelayAsync(300, cancellationToken, false);
 			} while (_table.IsVotingEnded() == false);
 			_table.EndVotingCycle();
 			_votingEnded.Invoke();
 			
-			Debug.Log("Vote cycle ended");
+			//Debug.Log("Vote cycle ended");
+		}
+
+		private async Task<VotingResponse> GetActionResponse(CancellationToken cancellationToken)
+		{
+			using var tokenSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+
+			var thinkingTask = _table.Voter.Logic.MakeVotingAction(_table.VotingContext, tokenSource.Token);
+
+			if (_gameManager.BotsGame)
+			{
+				var response = await thinkingTask;
+				tokenSource.Cancel();
+				return response;
+			}
+			
+			var result = await Task.WhenAny(
+				Timeout(tokenSource.Token),
+				thinkingTask);
+
+			tokenSource.Cancel();
+			return result.Result;
+
+			async Task<VotingResponse> Timeout(CancellationToken token)
+			{
+				await _gameManager.DelayAsync(40000, token, false);
+				return VotingResponse.Fold();
+			}
 		}
 
 		private void MakeVoteAction(VotingResponse response)
 		{
-			Debug.Log(response.Action);
+			//Debug.Log(response.Action);
 			switch (response.Action)
 			{
 				case VotingAction.Call:

@@ -11,15 +11,6 @@ namespace Poker.Gameplay.Core.States
 {
 	public class TableState
 	{
-		public IReadOnlyList<CardModel> Deck { get; } = Enumerable.Range(2, 12)
-			.SelectMany(value => new CardModel[]
-			{
-				new(CardType.Balloon, value),
-				new(CardType.Flame, value),
-				new(CardType.Oil, value),
-				new(CardType.Hills, value),
-			}).ToArray();
-		
 		public event Action PotChanged
 		{
 			add => _potChanged.Add(value);
@@ -53,7 +44,7 @@ namespace Poker.Gameplay.Core.States
 			set => _firstVoterIndex = VoterIndex = VoteEndIndex = value;
 		}
 		public int VoteEndIndex { get; private set; }
-		public VotingContext VotingContext { get; private set; } = new();
+		public VotingContext VotingContext { get; private set; }
 		public PlayerState Winner { get; private set; }
 		public bool RoundEnded { get; private set; } = true;
 
@@ -79,6 +70,14 @@ namespace Poker.Gameplay.Core.States
 		private int _pot;
 		private int _firstVoterIndex = -1;
 
+		public TableState()
+		{
+			VotingContext = new VotingContext()
+			{
+				Table = this
+			};
+		}
+
 		public void AddPlayers(IEnumerable<PlayerState> players)
 		{
 			_playersInGame.AddRange(players);
@@ -91,7 +90,7 @@ namespace Poker.Gameplay.Core.States
 			RoundEnded = false;
 			
 			_deck.Clear();
-			_deck.AddRange(Deck);
+			_deck.AddRange(CardModel.Deck);
 
 			UpdateListOfPlayerInGame();
 			DealTableCards();
@@ -101,7 +100,6 @@ namespace Poker.Gameplay.Core.States
 		public void EndRound()
 		{
 			RoundEnded = true;
-			Winner = null;
 
 			foreach (PlayerState player in _playersInGame)
 			{
@@ -116,7 +114,7 @@ namespace Poker.Gameplay.Core.States
 			IsVoting = true;
 			if (FirstVoterIndex == -1)
 			{
-				FirstVoterIndex = Random.Range(0, _playersInGame.Count);
+				FirstVoterIndex = RandomUtils.Random.Next(0, _playersInGame.Count);
 			}
 			else
 			{
@@ -285,7 +283,7 @@ namespace Poker.Gameplay.Core.States
 			Winner = playerWithHighestCombination;
 			_decidedWinner.Invoke(Winner);
 			
-			Debug.Log(Winner.Name);
+			//Debug.Log(Winner.Name);
 			
 			playerWithHighestCombination.GiveMoney(Pot);
 			

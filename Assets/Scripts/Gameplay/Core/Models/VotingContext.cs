@@ -43,6 +43,8 @@ namespace Poker.Gameplay.Core.Models
 	public class VotingContext
 	{
 		public int MinimumBet { get; set; }
+		public TableState Table { get; set; }
 		public bool IsBetRequired => MinimumBet != 0;
+		public PlayerState Voter => Table.Voter;
 	}
 }

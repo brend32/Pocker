@@ -39,7 +39,7 @@ namespace AurumGames.SceneManagement
             showPlayer.Ended += BecomeFullyVisible;
             showPlayer.Play();
             
-            _hidePlayer = new AnimationPlayer(this, hide);
+            _hidePlayer = new AnimationPlayer(this, new TracksEvaluator(150, hide));
             _hidePlayer.Started += () =>
             {
                 if (canvasGroup != null)
