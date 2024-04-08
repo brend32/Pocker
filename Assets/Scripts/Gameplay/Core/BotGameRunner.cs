@@ -126,16 +126,16 @@ namespace Poker.Gameplay.Core
 						        if (bot == bestRoundBot || bot == bestRoundBot)
 						        {
 							        if (RandomUtils.Random.NextDouble() < 0.04f)
-								        bot.Mutate();
+								        bot.Settings.Mutate();
 							        continue;
 						        }
 
 						        // Copy end mutate best ones 
 						        if (RandomUtils.Random.NextDouble() < 0.85f)
-							        bot.Copy(RandomUtils.Random.NextDouble() < 0.5 ? bestRoundBot : bestWinsBot);
+							        bot.Settings.Copy(RandomUtils.Random.NextDouble() < 0.5 ? bestRoundBot.Settings : bestWinsBot.Settings);
 						        else
-							        bot.Mutate();
-						        bot.Mutate();
+							        bot.Settings.Mutate();
+						        bot.Settings.Mutate();
 					        }
 				        }
 

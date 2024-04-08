@@ -13,11 +13,6 @@ namespace Poker.Gameplay.Core.States
 {
 	public class BotState : PlayerState
 	{
-		public override string ToString()
-		{
-			return $"{nameof(Wins)}: {Wins}, {nameof(RoundsAlive)}: {RoundsAlive}, {nameof(StrongPairThreshold)}: {StrongPairThreshold}, {nameof(EnemyStrongerCombinationMiddleThreshold)}: {EnemyStrongerCombinationMiddleThreshold}, {nameof(EnemyStrongerCombinationPanicThreshold)}: {EnemyStrongerCombinationPanicThreshold}, {nameof(TrustPairRankThreshold)}: {TrustPairRankThreshold}, {nameof(TrustGain)}: {TrustGain}, {nameof(TrustLoss)}: {TrustLoss}, {nameof(EnemyTrustThreshold)}: {EnemyTrustThreshold}, {nameof(LowMoneyThreshold)}: {LowMoneyThreshold}, {nameof(MinRoundsWithoutFool)}: {MinRoundsWithoutFool}, {nameof(FoolChance)}: {FoolChance}, {nameof(SilentChance)}: {SilentChance}, {nameof(PanicThreshold)}: {PanicThreshold}, {nameof(BlindPanicThreshold)}: {BlindPanicThreshold}, {nameof(MoneyPanicMultiplier)}: {MoneyPanicMultiplier}, {nameof(PairRankPanicMultiplier)}: {PairRankPanicMultiplier}, {nameof(EnemyStrongerCombinationPanicMultiplier)}: {EnemyStrongerCombinationPanicMultiplier}, {nameof(FoolRaisePercent)}: {FoolRaisePercent}, {nameof(StrongPairRaisePercent)}: {StrongPairRaisePercent}, {nameof(RaiseOffset)}: {RaiseOffset}, {nameof(BetPanicMultiplier)}: {BetPanicMultiplier}, {nameof(SkipTurnChance)}: {SkipTurnChance}";
-		}
-
 		public int PairRank { get; private set; }
 		public int RoundsWithoutFool { get; private set; }
 		public int StartingCash { get; private set; }
@@ -26,27 +21,7 @@ namespace Poker.Gameplay.Core.States
 		public int Wins { get; private set; }
 		public int RoundsAlive { get; private set; }
 
-		public int StrongPairThreshold { get; set; } = 19;
-		public double EnemyStrongerCombinationMiddleThreshold { get; private set; } = 0.51371320977807;
-		public double EnemyStrongerCombinationPanicThreshold { get; private set; } = 0.405301503837109;
-		public int TrustPairRankThreshold { get; private set; } = 13;
-		public double TrustGain { get; private set; } = 0.340960390865803;
-		public double TrustLoss { get; private set; } = 0.523207994401455;
-		public double EnemyTrustThreshold { get; private set; } = 0.441805862672627;
-		public double LowMoneyThreshold { get; private set; } = 0.408863117620349;
-		public int MinRoundsWithoutFool { get; private set; } = 21;
-		public double FoolChance { get; private set; } = 0.432952526481822;
-		public double SilentChance { get; private set; } = 0.503569041788578;
-		public double PanicThreshold { get; private set; } = 0.551069484502077;
-		public double BlindPanicThreshold { get; private set; } = 0.4534722879529;
-		public double MoneyPanicMultiplier { get; private set; } = 0.506963741928339;
-		public double PairRankPanicMultiplier { get; private set; } = 0.519698183909059;
-		public double EnemyStrongerCombinationPanicMultiplier { get; private set; } = 0.571910247504711;
-		public double FoolRaisePercent { get; private set; } = 0.554264077916741;
-		public double StrongPairRaisePercent { get; private set; } = 0.460994556993246;
-		public double RaiseOffset { get; private set; } = 0.576030493974686;
-		public double BetPanicMultiplier { get; private set; } = 0.540366609245539;
-		public double SkipTurnChance { get; private set; } = 0.476075193881988;
+		public BotSettings Settings { get; private set; } = new();
 
 		public void CountWin()
 		{
@@ -64,32 +39,6 @@ namespace Poker.Gameplay.Core.States
 			TrustMap.Clear();
 			ResetRoundWithoutFoolCounter();
 			base.Reset();
-		}
-
-		public void Copy(BotState bot)
-		{
-			// Copy parameters from another bot
-			StrongPairThreshold = bot.StrongPairThreshold; 
-			EnemyStrongerCombinationMiddleThreshold = bot.EnemyStrongerCombinationMiddleThreshold; 
-			EnemyStrongerCombinationPanicThreshold = bot.EnemyStrongerCombinationPanicThreshold; 
-			TrustPairRankThreshold = bot.TrustPairRankThreshold; 
-			TrustGain = bot.TrustGain; 
-			TrustLoss = bot.TrustLoss; 
-			EnemyTrustThreshold = bot.EnemyTrustThreshold; 
-			LowMoneyThreshold = bot.LowMoneyThreshold; 
-			MinRoundsWithoutFool = bot.MinRoundsWithoutFool; 
-			FoolChance = bot.FoolChance; 
-			SilentChance = bot.SilentChance; 
-			PanicThreshold = bot.PanicThreshold; 
-			BlindPanicThreshold = bot.BlindPanicThreshold; 
-			MoneyPanicMultiplier = bot.MoneyPanicMultiplier; 
-			PairRankPanicMultiplier = bot.PairRankPanicMultiplier; 
-			EnemyStrongerCombinationPanicMultiplier = bot.EnemyStrongerCombinationPanicMultiplier; 
-			FoolRaisePercent = bot.FoolRaisePercent; 
-			StrongPairRaisePercent = bot.StrongPairRaisePercent; 
-			RaiseOffset = bot.RaiseOffset; 
-			BetPanicMultiplier = bot.BetPanicMultiplier; 
-			SkipTurnChance = bot.SkipTurnChance; 
 		}
 
 		public void SetPairRank()
@@ -125,13 +74,13 @@ namespace Poker.Gameplay.Core.States
 			foreach (PlayerState state in table.PlayersInGame.Where(p => p.Folded == false))
 			{
 				var playerCardsRank = CombinationOdds.GetPairRank(state.Cards);
-				if (playerCardsRank >= TrustPairRankThreshold)
+				if (playerCardsRank >= Settings.TrustPairRankThreshold)
 				{
-					TrustMap[state] += TrustGain;
+					TrustMap[state] += Settings.TrustGain;
 				}
 				else
 				{
-					TrustMap[state] -= TrustLoss;
+					TrustMap[state] -= Settings.TrustLoss;
 				}
 			}
 		}
@@ -142,96 +91,24 @@ namespace Poker.Gameplay.Core.States
 			RoundsAlive = 0;
 		}
 		
-		public void Mutate()
+		public override string ToString()
 		{
-			// Mutating properties to get new behaviour
-			for (int i = 0; i < 5; i++)
-			{
-				int n = RandomUtils.Random.Next(0, 30);
-				if (RandomUtils.Random.NextDouble() < 0.25)
-					continue;
-				
-				switch (n)
-				{
-					case 0:
-						StrongPairThreshold += RandomUtils.Random.Next(-15, 15);
-						break;
-					case 1:
-						EnemyStrongerCombinationMiddleThreshold += (RandomUtils.Random.NextDouble() - 0.5) * 0.13;
-						break;
-					case 2:
-						EnemyStrongerCombinationPanicThreshold += (RandomUtils.Random.NextDouble() - 0.5) * 0.13;
-						break;
-					case 3:
-						TrustPairRankThreshold += RandomUtils.Random.Next(-15, 15);
-						break;
-					case 4:
-						TrustGain += (RandomUtils.Random.NextDouble() - 0.5) * 0.13;
-						break;
-					case 5:
-						TrustLoss += (RandomUtils.Random.NextDouble() - 0.5) * 0.13;
-						break;
-					case 6:
-						EnemyTrustThreshold += (RandomUtils.Random.NextDouble() - 0.5) * 0.13;
-						break;
-					case 7:
-						LowMoneyThreshold += (RandomUtils.Random.NextDouble() - 0.5) * 0.13;
-						break;
-					case 8:
-						MinRoundsWithoutFool += RandomUtils.Random.Next(-15, 15);
-						break;
-					case 9:
-						FoolChance += (RandomUtils.Random.NextDouble() - 0.5) * 0.13;
-						break;
-					case 10:
-						SilentChance += (RandomUtils.Random.NextDouble() - 0.5) * 0.13;
-						break;
-					case 11:
-						PanicThreshold += (RandomUtils.Random.NextDouble() - 0.5) * 0.13;
-						break;
-					case 12:
-						BlindPanicThreshold += (RandomUtils.Random.NextDouble() - 0.5) * 0.13;
-						break;
-					case 13:
-						MoneyPanicMultiplier += (RandomUtils.Random.NextDouble() - 0.5) * 0.13;
-						break;
-					case 14:
-						PairRankPanicMultiplier += (RandomUtils.Random.NextDouble() - 0.5) * 0.13;
-						break;
-					case 15:
-						EnemyStrongerCombinationPanicMultiplier += (RandomUtils.Random.NextDouble() - 0.5) * 0.13;
-						break;
-					case 16:
-						FoolRaisePercent += (RandomUtils.Random.NextDouble() - 0.5) * 0.13;
-						break;
-					case 17:
-						StrongPairRaisePercent += (RandomUtils.Random.NextDouble() - 0.5) * 0.13;
-						break;
-					case 18:
-						RaiseOffset += (RandomUtils.Random.NextDouble() - 0.5) * 0.13;
-						break;
-					case 19:
-						BetPanicMultiplier += (RandomUtils.Random.NextDouble() - 0.5) * 0.13;
-						break;
-					case 20:
-						SkipTurnChance += (RandomUtils.Random.NextDouble() - 0.5) * 0.13;
-						break;
-					
-					case 25:
-						return;
-				}
-			}
+			return $"{nameof(Wins)}: {Wins}, {nameof(RoundsAlive)}: {RoundsAlive}, {nameof(Settings)}: {Settings}";
 		}
 		
 		public static BotState CreateBotPlayer(GameSettings gameSettings, string name)
 		{
 			var player = new BotState()
 			{
-				Balance = gameSettings.StartingCash,
+				Balance = Mathf.CeilToInt(gameSettings.StartingCash * BotPresets.CashMultiplier[gameSettings.Difficulty]),
 				StartingCash = gameSettings.StartingCash,
 				Name = name,
 				Logic = new BotLogic(),
 			};
+			player.Settings.Copy(BotPresets.Presets[gameSettings.Difficulty].RandomEntry());
+			if (RandomUtils.Random.NextDouble() > 0.15f)
+				player.Settings.Mutate();
+			
 			return player;
 		}
 	}
@@ -243,8 +120,9 @@ namespace Poker.Gameplay.Core.States
 		private VotingContext _votingContext;
 		private readonly GameManager _gameManager;
 
-		private bool IsLowMoney => _state.Balance < _state.LowMoneyThreshold * _state.StartingCash;
-		private bool IsStrongPair => _state.PairRank >= _state.StrongPairThreshold;
+		private BotSettings Settings => _state.Settings;
+		private bool IsLowMoney => _state.Balance < Settings.LowMoneyThreshold * _state.StartingCash;
+		private bool IsStrongPair => _state.PairRank >= Settings.StrongPairThreshold;
 		private double _panicLevel;
 		private double _higherEnemyCombinationChance;
 		private int _combinationValue;
@@ -267,7 +145,7 @@ namespace Poker.Gameplay.Core.States
 				UpdateCombinationValue();
 				UpdateHigherEnemyCombinationChance();
 
-				if (_higherEnemyCombinationChance >= _state.EnemyStrongerCombinationPanicThreshold)
+				if (_higherEnemyCombinationChance >= Settings.EnemyStrongerCombinationPanicThreshold)
 				{
 					if (_isFooling)
 					{
@@ -288,10 +166,10 @@ namespace Poker.Gameplay.Core.States
 			if (hasBets && _table.CardsRevealed == 0)
 				return BlindGuessWithTrust();
 			
-			if (_panicLevel >= _state.PanicThreshold)
+			if (_panicLevel >= Settings.PanicThreshold)
 				return VotingResponse.Fold();
 
-			if (_state.SkipTurnChance >= RandomUtils.Random.NextDouble())
+			if (Settings.SkipTurnChance >= RandomUtils.Random.NextDouble())
 				return VotingResponse.Call();
 			
 			if (_isSilent && _table.CardsRevealed == 3)
@@ -300,7 +178,7 @@ namespace Poker.Gameplay.Core.States
 			if (_isSilent && (_isFooling || IsStrongPair) && _table.CardsRevealed > 4)
 				return VotingResponse.Raise(GetRaiseAmount());
 			
-			if (_state.EnemyStrongerCombinationMiddleThreshold < _higherEnemyCombinationChance)
+			if (Settings.EnemyStrongerCombinationMiddleThreshold < _higherEnemyCombinationChance)
 				return VotingResponse.Raise(GetRaiseAmount());
 			
 			return VotingResponse.Call();
@@ -323,16 +201,16 @@ namespace Poker.Gameplay.Core.States
 
 		private void TrySetFoolingState()
 		{
-			if (_state.RoundsWithoutFool < _state.MinRoundsWithoutFool)
+			if (_state.RoundsWithoutFool < Settings.MinRoundsWithoutFool)
 				return;
 			
-			_isFooling = RandomUtils.Random.NextDouble() <= _state.FoolChance;
+			_isFooling = RandomUtils.Random.NextDouble() <= Settings.FoolChance;
 			_state.ResetRoundWithoutFoolCounter();
 		}
 
 		private void TrySetSilentState()
 		{
-			_isSilent = RandomUtils.Random.NextDouble() <= _state.SilentChance;
+			_isSilent = RandomUtils.Random.NextDouble() <= Settings.SilentChance;
 		}
 
 		private void UpdateCombinationValue()
@@ -349,18 +227,18 @@ namespace Poker.Gameplay.Core.States
 		private void UpdatePanicLevel(bool includeTrust)
 		{
 			_panicLevel = 0;
-			_panicLevel -= _state.MoneyPanicMultiplier * _state.Balance;
-			_panicLevel -= _state.PairRank * _state.PairRankPanicMultiplier;
-			_panicLevel += _votingContext.MinimumBet * _state.BetPanicMultiplier;
-			_panicLevel += _higherEnemyCombinationChance * _state.EnemyStrongerCombinationPanicMultiplier;
+			_panicLevel -= Settings.MoneyPanicMultiplier * _state.Balance;
+			_panicLevel -= _state.PairRank * Settings.PairRankPanicMultiplier;
+			_panicLevel += _votingContext.MinimumBet * Settings.BetPanicMultiplier;
+			_panicLevel += _higherEnemyCombinationChance * Settings.EnemyStrongerCombinationPanicMultiplier;
 
 			if (includeTrust)
 			{
 				foreach (PlayerState enemy in _table.PlayersInGame.Where(p => p.Folded == false))
 				{
-					if (_state.TrustMap[enemy] > _state.EnemyTrustThreshold)
+					if (_state.TrustMap[enemy] > Settings.EnemyTrustThreshold)
 					{
-						_panicLevel += _votingContext.MinimumBet * _state.BetPanicMultiplier;
+						_panicLevel += _votingContext.MinimumBet * Settings.BetPanicMultiplier;
 					}
 				}
 			}
@@ -368,25 +246,25 @@ namespace Poker.Gameplay.Core.States
 
 		private int GetRaiseAmount()
 		{
-			var raisePercent = _isFooling ? _state.FoolRaisePercent : _state.StrongPairRaisePercent;
+			var raisePercent = _isFooling ? Settings.FoolRaisePercent : Settings.StrongPairRaisePercent;
 			
 			return Mathf.CeilToInt(
 				_state.Balance *
 				Mathf.Max(
 					0.01f,
-					(float)(raisePercent + _state.RaiseOffset * RandomUtils.Random.NextDouble())
+					(float)(raisePercent + Settings.RaiseOffset * RandomUtils.Random.NextDouble())
 				)
 			);
 		}
 
 		private VotingResponse BlindGuess()
 		{
-			if (_panicLevel >= _state.BlindPanicThreshold)
+			if (_panicLevel >= Settings.BlindPanicThreshold)
 				return VotingResponse.Fold();
 			
 			if (IsStrongPair && _isFooling == false)
 			{
-				return VotingResponse.Raise(GetRaiseAmount());
+				return VotingResponse.Raise(Mathf.CeilToInt(GetRaiseAmount() * 0.5f));
 			}
 			
 			if (IsLowMoney && _isFooling == false)
@@ -399,12 +277,12 @@ namespace Poker.Gameplay.Core.States
 		
 		private VotingResponse BlindGuessWithTrust()
 		{
-			if (_panicLevel >= _state.PanicThreshold)
+			if (_panicLevel >= Settings.PanicThreshold)
 				return VotingResponse.Fold();
 			
 			if (IsStrongPair || _isFooling)
 			{
-				return VotingResponse.Raise(GetRaiseAmount());
+				return VotingResponse.Raise(Mathf.CeilToInt(GetRaiseAmount() * 0.5f));
 			}
 			
 			if (IsLowMoney)

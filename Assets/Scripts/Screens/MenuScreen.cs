@@ -7,6 +7,7 @@ using Poker.Gameplay.Core;
 using Poker.Menu.UI;
 using UnityEngine;
 using UnityEngine.UI;
+using Application = UnityEngine.Device.Application;
 
 namespace Poker.Screens
 {
@@ -105,7 +106,16 @@ namespace Poker.Screens
 
         public void PlayAnimation()
         {
+            _graphicRaycaster.enabled = false;
             _animation.SetState(Visibility.Visible);
+        }
+
+        public void Exit()
+        {
+#if UNITY_EDITOR
+            UnityEditor.EditorApplication.isPlaying = false;
+#endif
+            Application.Quit();
         }
 
         public void OpenDifficultyChooseScreen()
