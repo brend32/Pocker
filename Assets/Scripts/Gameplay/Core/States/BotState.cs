@@ -38,6 +38,10 @@ namespace Poker.Gameplay.Core.States
 			Balance = StartingCash;
 			TrustMap.Clear();
 			ResetRoundWithoutFoolCounter();
+			if (Logic is BotLogic botLogic)
+			{
+				botLogic.Reset();
+			}
 			base.Reset();
 		}
 
@@ -182,6 +186,13 @@ namespace Poker.Gameplay.Core.States
 				return VotingResponse.Raise(GetRaiseAmount());
 			
 			return VotingResponse.Call();
+		}
+
+		public void Reset()
+		{
+			_votingContext = null;
+			_table = null;
+			_state = null;
 		}
 
 		public void RoundEnded(PlayerState winner)
